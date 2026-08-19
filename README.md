@@ -97,7 +97,6 @@ TrackIntern/
 ├── scripts/
 │
 ├── .dockerignore
-├── .env.example
 ├── .gitignore
 ├── docker-compose.yml
 └── README.md
