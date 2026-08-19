@@ -1,6 +1,6 @@
-# TrackIntern
+# Kaushal
 
-TrackIntern is an internship tracking and decision-support platform designed to help students discover relevant opportunities, evaluate eligibility, manage applications, maintain supporting evidence, and make better internship decisions.
+Kaushal is an internship tracking and decision-support platform designed to help students discover relevant opportunities, evaluate eligibility, manage applications, maintain supporting evidence, and make better internship decisions.
 
 The project uses a modular monolith backend with MongoDB as the primary data store. The frontend is developed separately and consumes the backend through the documented API contracts.
 
@@ -16,7 +16,7 @@ The repository structure and local development environment are established. Appl
 
 ## Architecture
 
-TrackIntern follows a **modular monolith** architecture. The backend is deployed as a single application while maintaining clear boundaries between business domains. It contains independent domain modules rather than separate microservices.
+Kaushal follows a **modular monolith** architecture. The backend is deployed as a single application while maintaining clear boundaries between business domains. It contains independent domain modules rather than separate microservices.
 
 ```text
                         ┌──────────────────────┐
@@ -49,7 +49,7 @@ TrackIntern follows a **modular monolith** architecture. The backend is deployed
 ## Repository Structure
 
 ```text
-TrackIntern/
+Kaushal/
 │
 ├── backend/
 │   ├── src/
@@ -165,8 +165,8 @@ git --version
 ### 1. Clone the repository
 
 ```bash
-git clone git@github.com:dipak0000812/TrackIntern.git
-cd TrackIntern
+git clone git@github.com:dipak0000812/Kaushal.git
+cd Kaushal
 ```
 
 ### 2. Configure environment variables
@@ -280,7 +280,7 @@ The backend API is versioned under `/api/v1`. API behavior is defined in `docs/a
 
 ## Database
 
-TrackIntern uses MongoDB as its primary application database. Database design principles and domain boundaries are documented in `docs/database/DATABASE.md`. MongoDB access is isolated behind the backend's persistence boundaries rather than being accessed directly from controllers.
+Kaushal uses MongoDB as its primary application database. Database design principles and domain boundaries are documented in `docs/database/DATABASE.md`. MongoDB access is isolated behind the backend's persistence boundaries rather than being accessed directly from controllers.
 
 ---
 
