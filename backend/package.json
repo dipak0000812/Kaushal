@@ -6,7 +6,9 @@
     "test": "node --test",
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
-    "test:watch": "node --test --watch"
+    "test:watch": "node --test --watch",
+    "seed": "node src/db/seed/seed.js",
+    "seed:verify": "node src/db/seed/verifySeed.js"
   },
   "type": "module",
   "private": true,
@@ -27,6 +29,10 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "mongodb-memory-server": "^11.2.0",
     "nodemon": "^3.1.14"
+  },
+  "allowScripts": {
+    "mongodb-memory-server@11.2.0": true
   }
 }
