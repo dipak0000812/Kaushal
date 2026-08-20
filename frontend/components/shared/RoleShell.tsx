@@ -150,6 +150,13 @@ export default function RoleShell({ role, children }: RoleShellProps) {
             <LogOut className="w-3.5 h-3.5" />
             Logout
           </button>
+          <Link
+            href="/dev/login"
+            className="w-full flex items-center justify-center gap-2 mt-1.5 px-3 py-2 border border-[#E2E8F0] bg-white rounded-md text-xs font-semibold text-[#5B21B6] hover:bg-[#EDE9FE] hover:border-[#DDD6FE] transition-colors"
+          >
+            <ShieldCheck className="w-3.5 h-3.5" />
+            Switch Role (Dev)
+          </Link>
         </div>
       </aside>
 
