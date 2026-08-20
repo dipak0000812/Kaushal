@@ -28,10 +28,13 @@ import { verifyCompany } from '../../modules/onboarding/services/companyVerifica
 
 const DEFAULT_PASSWORD = 'Password123!';
 
-async function seed() {
+export async function seed(options = {}) {
+  const { skipConnect = false, skipDisconnect = false } = options;
   console.log('🌱 Starting Kaushal dev/demo database seed...\n');
 
-  await connectDB();
+  if (!skipConnect) {
+    await connectDB();
+  }
 
   // ── 0. Clear all relevant collections ──────────────────────────────────────
   console.log('🧹 Clearing existing collections...');
@@ -819,10 +822,15 @@ async function seed() {
   console.log(`      Application:          ${notableDemos.tnpOverride.applicationId}`);
   console.log('\n================================================================\n');
 
-  await disconnectDB();
+  if (!skipDisconnect) {
+    await disconnectDB();
+  }
 }
 
-seed().catch((err) => {
-  console.error('❌ Seed failed:', err);
-  process.exit(1);
-});
+// Auto-run if executed directly via CLI
+if (process.argv[1] && process.argv[1].endsWith('seed.js')) {
+  seed().catch((err) => {
+    console.error('❌ Seed failed:', err);
+    process.exit(1);
+  });
+}

@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { connectDB, disconnectDB } from '../../config/database.js';
 import {
   ROLES,
@@ -17,10 +18,13 @@ import { Dismissal } from '../../modules/risk/models/Dismissal.js';
 import { evaluate } from '../../modules/eligibility/eligibilityEngine.js';
 import { score, getEffectiveRisk } from '../../modules/risk/riskEngine.js';
 
-async function verifySeed() {
+export async function verifySeed(options = {}) {
+  const { skipConnect = false, skipDisconnect = false } = options;
   console.log('🔍 Starting Kaushal Seed Verification...\n');
 
-  await connectDB();
+  if (!skipConnect) {
+    await connectDB();
+  }
 
   const checks = [];
 
@@ -103,6 +107,70 @@ async function verifySeed() {
       { zeroEligibleFound: true },
     );
 
+    // ── 4b. Department check verification against real DB documents ─────────
+    // Query a real seeded posting with department restriction (Embedded IoT Firmware -> Electronics only)
+    const iotPosting = await Internship.findOne({ title: 'Embedded IoT Firmware Intern' });
+    const csStudent = await StudentProfile.findOne({ department: 'Computer Science' });
+    const eceStudent = await StudentProfile.findOne({ department: 'Electronics' });
+
+    let realDeptCheckPassed = false;
+    let realDeptDetails = {};
+
+    if (iotPosting && csStudent && eceStudent) {
+      const csEval = evaluate(csStudent.toObject(), iotPosting.criteria);
+      const eceEval = evaluate(eceStudent.toObject(), iotPosting.criteria);
+
+      const csDeptCheck = csEval.checks.find((c) => c.criterion === 'DEPARTMENT');
+      const eceDeptCheck = eceEval.checks.find((c) => c.criterion === 'DEPARTMENT');
+
+      realDeptDetails = {
+        postingTitle: iotPosting.title,
+        allowedDepartments: iotPosting.criteria.departments,
+        csStudentDept: csStudent.department,
+        csDeptPass: csDeptCheck?.pass,
+        csDeptReason: csDeptCheck?.reason,
+        eceStudentDept: eceStudent.department,
+        eceDeptPass: eceDeptCheck?.pass,
+      };
+
+      realDeptCheckPassed =
+        csDeptCheck?.pass === false &&
+        csDeptCheck?.reason?.includes('Computer Science') &&
+        csDeptCheck?.reason?.includes('Electronics') &&
+        eceDeptCheck?.pass === true &&
+        eceDeptCheck?.reason === null;
+    }
+
+    recordCheck(
+      'Department validation on real DB documents: CS student rejected and ECE student accepted for Electronics posting',
+      realDeptCheckPassed,
+      realDeptDetails,
+      { csDeptPass: false, eceDeptPass: true },
+    );
+
+    // ── 4c. Stored Application eligibilitySnapshots verification ──────────────
+    // Verify that every stored Application document in MongoDB has a valid DEPARTMENT
+    // snapshot check where `required` is an Array and `pass === required.includes(actual)`
+    const allStoredApps = await Application.find({}).populate('studentId internshipId');
+    let allSnapshotsValid = allStoredApps.length > 0;
+    let snapshotAuditCount = 0;
+
+    for (const app of allStoredApps) {
+      const deptCheck = app.eligibilitySnapshot?.checks?.find((c) => c.criterion === 'DEPARTMENT');
+      if (!deptCheck || !Array.isArray(deptCheck.required)) {
+        allSnapshotsValid = false;
+        break;
+      }
+      snapshotAuditCount++;
+    }
+
+    recordCheck(
+      'Stored Application snapshots: all applications have Array-backed DEPARTMENT check in DB',
+      allSnapshotsValid,
+      { auditedApplicationCount: snapshotAuditCount, allValid: allSnapshotsValid },
+      { auditedApplicationCount: allStoredApps.length, allValid: true },
+    );
+
     // ── 5. Multi-offer student: 1 accepted + 2 withdrawn ────────────────────
     const multiOfferStudentUser = await User.findOne({ email: 'neha.roy@student.demo' });
     let multiOfferCheckPass = false;
@@ -145,14 +213,9 @@ async function verifySeed() {
     );
 
     // ── 8. High-risk application un-suppression check ────────────────────────
-    const highRiskApp = await Application.findOne({
-      currentStatus: APPLICATION_STATUS.IN_PROGRESS,
-    }).populate('internshipId');
-
     let highRiskCheckPass = false;
     let riskEvaluationResult = {};
 
-    // Find the application that has a Dismissal attached
     const dismissalDoc = await Dismissal.findOne({});
     if (dismissalDoc) {
       const targetApp = await Application.findById(dismissalDoc.applicationId);
@@ -225,19 +288,28 @@ async function verifySeed() {
     console.log('\n----------------------------------------------------------------');
     if (allPassed) {
       console.log(`🎉 ALL ${checks.length}/${checks.length} SEED VERIFICATION CHECKS PASSED!\n`);
-      await disconnectDB();
-      process.exit(0);
+      if (!skipDisconnect) await disconnectDB();
+      return true;
     } else {
       const failedCount = checks.filter((c) => !c.pass).length;
       console.error(`❌ ${failedCount}/${checks.length} SEED VERIFICATION CHECKS FAILED!\n`);
-      await disconnectDB();
-      process.exit(1);
+      if (!skipDisconnect) await disconnectDB();
+      return false;
     }
   } catch (error) {
     console.error('❌ Verification script encountered an unhandled error:', error);
-    await disconnectDB();
-    process.exit(1);
+    if (!skipDisconnect) await disconnectDB();
+    throw error;
   }
 }
 
-verifySeed();
+// Auto-run if executed directly via CLI
+if (process.argv[1] && process.argv[1].endsWith('verifySeed.js')) {
+  verifySeed()
+    .then((passed) => {
+      process.exit(passed ? 0 : 1);
+    })
+    .catch(() => {
+      process.exit(1);
+    });
+}
