@@ -1,0 +1,191 @@
+'use client';
+
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { apiClient } from '@/lib/api/client';
+import { Role, ApplicationStatus } from '@/lib/types';
+import RoleShell from '@/components/shared/RoleShell';
+import WhatsNextPanel from '@/components/shared/WhatsNextPanel';
+import Link from 'next/link';
+import { Briefcase, Calendar, Users, Award, ChevronRight } from 'lucide-react';
+
+export default function StudentDashboard() {
+  // 1. Fetch Student Profile
+  const { data: profileRes, isLoading: isProfileLoading } = useQuery({
+    queryKey: ['student-profile'],
+    queryFn: () => apiClient.student.getProfile(),
+  });
+
+  // 2. Fetch Available Internships
+  const { data: internshipsRes, isLoading: isInternshipsLoading } = useQuery({
+    queryKey: ['internships'],
+    queryFn: () => apiClient.student.getInternships(),
+  });
+
+  // 3. Fetch Applications
+  const { data: applicationsRes, isLoading: isApplicationsLoading } = useQuery({
+    queryKey: ['student-applications'],
+    queryFn: () => apiClient.student.getApplications(),
+  });
+
+  const isLoading = isProfileLoading || isInternshipsLoading || isApplicationsLoading;
+
+  if (isLoading) {
+    return (
+      <RoleShell role={Role.STUDENT}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="text-sm font-semibold text-[#64748B] animate-pulse">
+            Loading student dashboard...
+          </div>
+        </div>
+      </RoleShell>
+    );
+  }
+
+  const profile = profileRes?.data;
+  const internships = internshipsRes?.data || [];
+  const applications = applicationsRes?.data || [];
+
+  // Determine what status instruction to pass to WhatsNextPanel
+  let studentStatus: 'offered' | 'inProgress' | undefined = undefined;
+  if (applications.some(a => a.currentStatus === ApplicationStatus.OFFERED)) {
+    studentStatus = 'offered';
+  } else if (applications.some(a => a.currentStatus === ApplicationStatus.IN_PROGRESS)) {
+    studentStatus = 'inProgress';
+  }
+
+  // Filter out non-open postings in student list view (to keep it clean and actionable)
+  const openInternships = internships.filter(i => i.status === 'open');
+
+  return (
+    <RoleShell role={Role.STUDENT}>
+      <div className="space-y-8">
+        
+        {/* Header Block */}
+        <div>
+          <h2 className="text-xl font-bold text-[#0F172A]">Welcome back, {profile?.name || 'Student'}!</h2>
+          <p className="text-xs text-[#64748B] mt-0.5">
+            Monitor your eligibility status and track active internship selections.
+          </p>
+        </div>
+
+        {/* Action Alerts Block */}
+        <WhatsNextPanel role={Role.STUDENT} studentStatus={studentStatus} />
+
+        {/* Profile Snapshot Stats */}
+        <section className="bg-white border border-[#E2E8F0] rounded-lg p-5 flex flex-wrap justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-bold text-sm">
+              {profile?.cgpa.toFixed(1)}
+            </div>
+            <div>
+              <span className="text-[10px] text-[#94A3B8] uppercase font-bold tracking-wider">Academic Record</span>
+              <p className="text-xs text-[#334155] font-semibold mt-0.5">
+                {profile?.department} &bull; Year {profile?.year}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-6">
+            <div className="text-center md:text-left">
+              <span className="text-[10px] text-[#94A3B8] uppercase font-bold tracking-wider block">Active Applications</span>
+              <span className="text-sm font-bold text-[#0F172A] mt-0.5 block">{applications.length} submitted</span>
+            </div>
+            <div className="text-center md:text-left border-l border-[#E2E8F0] pl-6">
+              <span className="text-[10px] text-[#94A3B8] uppercase font-bold tracking-wider block">Pending Backlogs</span>
+              <span className={`text-sm font-bold mt-0.5 block ${profile?.backlogs ? 'text-[#DC2626]' : 'text-[#16A34A]'}`}>
+                {profile?.backlogs || 0} active
+              </span>
+            </div>
+          </div>
+        </section>
+
+        {/* Internships List */}
+        <section className="space-y-4">
+          <h3 className="text-sm font-bold text-[#475569] uppercase tracking-wider">Available Internship Opportunities</h3>
+          {openInternships.length === 0 ? (
+            <div className="bg-white border border-[#E2E8F0] rounded-lg p-10 text-center text-xs text-[#64748B]">
+              No active internship postings available at this time. Check back later.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {openInternships.map((internship) => {
+                // Determine eligibility from mock data list check
+                const isEligible = internship.eligibility?.eligible;
+                const hasApplied = applications.some(a => a.internshipId === internship.id);
+
+                return (
+                  <div 
+                    key={internship.id} 
+                    className="bg-white border border-[#E2E8F0] rounded-lg p-5 flex flex-col justify-between gap-4 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
+                  >
+                    <div>
+                      {/* Top Row with Company & Eligibility Badge */}
+                      <div className="flex justify-between items-start gap-4">
+                        <div>
+                          <span className="text-[10px] text-[#94A3B8] font-bold uppercase tracking-wide">
+                            {internship.companyName}
+                          </span>
+                          <h4 className="text-sm font-bold text-[#0F172A] mt-0.5">
+                            Frontend Developer Internship
+                          </h4>
+                        </div>
+                        <div>
+                          {isEligible ? (
+                            <span className="inline-flex px-2 py-0.5 text-[10px] font-bold rounded bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0]">
+                              Eligible
+                            </span>
+                          ) : (
+                            <span className="inline-flex px-2 py-0.5 text-[10px] font-bold rounded bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA]">
+                              Ineligible
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Internship metrics */}
+                      <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-[#F1F5F9]">
+                        <div className="flex items-center gap-1 text-[11px] text-[#64748B]">
+                          <Users className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
+                          <span>{internship.vacancies} vacancies</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-[#64748B]">
+                          <Award className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
+                          <span>Min {internship.criteria.minCgpa} CGPA</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[11px] text-[#64748B]">
+                          <Calendar className="w-3.5 h-3.5 text-[#94A3B8] shrink-0" />
+                          <span className="truncate">Last date: {internship.lastDate}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions block */}
+                    <div className="flex items-center justify-between border-t border-[#F1F5F9] pt-3">
+                      {hasApplied ? (
+                        <span className="text-[11px] text-[#16A34A] font-semibold">
+                          &bull; Already Applied
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-[#64748B]">
+                          Requires {internship.criteria.department} department
+                        </span>
+                      )}
+                      <Link
+                        href={`/student/internships/${internship.id}`}
+                        className="inline-flex items-center gap-1 text-xs font-bold text-[#5B21B6] hover:underline"
+                      >
+                        View details & apply
+                        <ChevronRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
+      </div>
+    </RoleShell>
+  );
+}

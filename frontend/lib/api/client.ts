@@ -1074,7 +1074,7 @@ export const apiClient = {
       USE_MOCKS
         ? Promise.resolve(mockAcceptOffer(applicationId))
         : request<any>(`/student/applications/${applicationId}/accept`, 'PATCH'),
-    declineOffer: (applicationId: string) => {
+    declineOffer: (applicationId: string): Promise<ApiResponse<Application>> => {
       const app = mockApplications.find(a => a.id === applicationId);
       if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
       return Promise.resolve(applyTransition(app, ApplicationStatus.WITHDRAWN, mockStudentProfile.userId, Role.STUDENT));
