@@ -108,6 +108,12 @@ export let mockCompanyProfile: CompanyProfile = {
   status: 'pending',
 };
 
+export let mockCompanies: CompanyProfile[] = [
+  mockCompanyProfile,
+  { id: 'company-2', userId: 'user-company-2', companyName: 'Infosys', contactEmail: 'hr@infosys.com', status: 'pending' },
+  { id: 'company-3', userId: 'user-company-3', companyName: 'Google', contactEmail: 'hr@google.com', status: 'verified' }
+];
+
 export let mockInternships: Internship[] = [
   {
     id: 'internship-1',
@@ -263,6 +269,11 @@ export let mockProgressLogs: ProgressLog[] = [
 ];
 
 export let mockDismissals: Dismissal[] = [];
+
+export let mockTnpUsers: { name: string; email: string; role: 'faculty' | 'hod'; department: string }[] = [
+  { name: 'Dr. Vivek Kumar', email: 'vivek@kaushal.edu', role: 'faculty', department: 'Computer Science' },
+  { name: 'Dr. Neha Shah', email: 'neha@kaushal.edu', role: 'faculty', department: 'Information Technology' }
+];
 
 // ==========================================
 // ELIGIBILITY COMPUTATION ENGINE (SHARED)
@@ -433,6 +444,10 @@ function applyAssignmentTransition(
 }
 
 function mockVerifyCompany(companyId: string) {
+  const company = mockCompanies.find(c => c.id === companyId);
+  if (company) {
+    company.status = 'verified';
+  }
   if (mockCompanyProfile.id === companyId) {
     mockCompanyProfile.status = 'verified';
   }
@@ -866,6 +881,23 @@ function mockGetAlerts() {
 }
 
 function mockGetAnalytics() {
+  const skillsList = ['React', 'Node.js', 'Java', 'SQL', 'Go', 'TypeScript'];
+  const baseDemand: Record<string, number> = { 'React': 10, 'Node.js': 8, 'Java': 5, 'SQL': 4, 'Go': 3, 'TypeScript': 4 };
+  const baseSupply: Record<string, number> = { 'React': 6, 'Node.js': 4, 'Java': 5, 'SQL': 3, 'Go': 2, 'TypeScript': 3 };
+
+  const skillGapReport = skillsList.map(skill => {
+    const rejections = mockApplications.filter(a => {
+      const lastEvent = a.timeline[a.timeline.length - 1];
+      return lastEvent && lastEvent.reason && lastEvent.reason.toLowerCase().includes(skill.toLowerCase());
+    }).length;
+
+    return {
+      skill,
+      demand: (baseDemand[skill] || 5) + rejections,
+      supply: Math.max(0, (baseSupply[skill] || 5) - rejections)
+    };
+  });
+
   return {
     funnel: {
       applied: mockApplications.length,
@@ -881,11 +913,7 @@ function mockGetAnalytics() {
       { company: 'TCS', count: mockApplications.filter(a => a.internshipTitle?.includes('TCS')).length },
       { company: 'Google', count: mockApplications.filter(a => a.internshipTitle?.includes('Google')).length },
     ],
-    skillGapReport: [
-      { skill: 'React', demand: 10, supply: 6 },
-      { skill: 'Node.js', demand: 8, supply: 4 },
-      { skill: 'Java', demand: 5, supply: 5 },
-    ],
+    skillGapReport,
     ppoOutcomes: {
       offered: mockApplications.filter(a => a.ppoOffered).length,
       completed: mockApplications.filter(a => a.currentStatus === ApplicationStatus.COMPLETED).length,
@@ -987,14 +1015,36 @@ export const apiClient = {
       USE_MOCKS
         ? Promise.resolve(mockResponse({ inviteToken: 'mock-invite-token', expiresAt: new Date(Date.now() + 86400000).toISOString() }))
         : request<any>('/tnp/invites', 'POST', body),
-    createUser: (body: { name: string; email: string; role: 'faculty' | 'hod'; department: string }) =>
-      USE_MOCKS
-        ? Promise.resolve(mockResponse({ success: true }))
-        : request<any>('/tnp/users', 'POST', body),
+    createUser: (body: { name: string; email: string; role: 'faculty' | 'hod'; department: string }): Promise<ApiResponse<any>> => {
+      if (USE_MOCKS) {
+        const lowerEmail = body.email.toLowerCase();
+        const exists = mockTnpUsers.some(u => u.email.toLowerCase() === lowerEmail);
+        if (exists) {
+          return Promise.resolve({
+            success: false,
+            error: {
+              code: 'CONFLICT',
+              message: `User with email ${body.email} already exists.`,
+            },
+          });
+        }
+        mockTnpUsers.push(body);
+        return Promise.resolve(mockResponse({ success: true }));
+      }
+      return request<any>('/tnp/users', 'POST', body);
+    },
     verifyCompany: (companyId: string) =>
       USE_MOCKS
         ? Promise.resolve(mockVerifyCompany(companyId))
         : request<any>(`/tnp/companies/${companyId}/verify`, 'PATCH'),
+    getCompanies: () =>
+      USE_MOCKS
+        ? Promise.resolve(mockResponse(mockCompanies))
+        : request<CompanyProfile[]>('/tnp/companies', 'GET'),
+    getUsers: () =>
+      USE_MOCKS
+        ? Promise.resolve(mockResponse(mockTnpUsers))
+        : request<any[]>('/tnp/users', 'GET'),
     getPendingInternships: () =>
       USE_MOCKS
         ? Promise.resolve(mockResponse(mockInternships.filter(i => i.status === 'pendingApproval')))
@@ -1003,12 +1053,12 @@ export const apiClient = {
       USE_MOCKS
         ? Promise.resolve(mockApproveInternship(id))
         : request<Internship>(`/tnp/internships/${id}/approve`, 'PATCH'),
-    verifyOffer: (applicationId: string) => {
+    verifyOffer: (applicationId: string): Promise<ApiResponse<Application>> => {
       const app = mockApplications.find(a => a.id === applicationId);
       if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
       return Promise.resolve(applyTransition(app, ApplicationStatus.TNP_VERIFIED, 'user-tnp-1', Role.TNP));
     },
-    rejectOffer: (applicationId: string, reason: string) => {
+    rejectOffer: (applicationId: string, reason: string): Promise<ApiResponse<Application>> => {
       const app = mockApplications.find(a => a.id === applicationId);
       if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
       return Promise.resolve(applyTransition(app, ApplicationStatus.OFFERED, 'user-tnp-1', Role.TNP, reason));
