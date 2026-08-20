@@ -748,14 +748,10 @@ function mockGetApplicants(internshipId: string) {
       ApplicationStatus.COMPLETED
     ].includes(a.currentStatus);
 
-    if (!effectiveEligible) {
-      return null;
-    }
-
     if (!isPostShortlist) {
       return {
         applicationId: a.id,
-        eligible: true,
+        eligible: effectiveEligible,
         matchedCriteriaCount: a.eligibilitySnapshot.checks.filter(c => c.passed).length,
         currentStatus: a.currentStatus,
         studentName: a.studentName,
@@ -763,7 +759,7 @@ function mockGetApplicants(internshipId: string) {
     } else {
       return {
         applicationId: a.id,
-        eligible: true,
+        eligible: effectiveEligible,
         matchedCriteriaCount: a.eligibilitySnapshot.checks.filter(c => c.passed).length,
         currentStatus: a.currentStatus,
         studentName: a.studentName,
@@ -771,7 +767,7 @@ function mockGetApplicants(internshipId: string) {
         resumeUrl: 'https://example.com/resume.pdf',
       };
     }
-  }).filter(Boolean);
+  });
 
   return mockResponse(mappedApps);
 }
@@ -1167,10 +1163,10 @@ export const apiClient = {
       if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
       return Promise.resolve(applyTransition(app, ApplicationStatus.SHORTLISTED, mockCompanyProfile.id, Role.COMPANY));
     },
-    rejectApplicant: (applicationId: string) => {
+    rejectApplicant: (applicationId: string, reason?: string) => {
       const app = mockApplications.find(a => a.id === applicationId);
       if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
-      return Promise.resolve(applyTransition(app, ApplicationStatus.REJECTED, mockCompanyProfile.id, Role.COMPANY));
+      return Promise.resolve(applyTransition(app, ApplicationStatus.REJECTED, mockCompanyProfile.id, Role.COMPANY, reason));
     },
     offerInternship: (applicationId: string) => {
       const app = mockApplications.find(a => a.id === applicationId);
