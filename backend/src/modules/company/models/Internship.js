@@ -1,27 +1,28 @@
 import mongoose from 'mongoose';
-import { INTERNSHIP_STATUS, INTERNSHIP_MODE } from '../../../utils/constants.js';
+import {
+  INTERNSHIP_STATUS,
+  INTERNSHIP_MODE,
+  INTERNSHIP_SOURCE,
+  OFF_CAMPUS_VERIFICATION_STATUS,
+} from '../../../utils/constants.js';
 
 const { Schema } = mongoose;
 
 /**
- * Internship — a job posting created by a company.
+ * Internship — a job posting created by a company or an externally registered opportunity.
  *
  * Data_Model.md:
- *   References CompanyProfile.
+ *   References CompanyProfile (for CAMPUS opportunities).
  *   criteria: embedded object (minCgpa, maxBacklogs, department,
  *     year, requiredSkills[], requiredCerts[]) — embedded because
  *     criteria has no independent identity outside its posting.
  *   status: pendingApproval | open | closed | cancelled
+ *   source: campus | off_campus
  *   vacancies, lastDate
  *
  *   Closure is NOT a stored derived flag — "filled" is computed at
  *   read and write time from a count of non-terminal-negative
  *   applications (API contract Section 2).
- *
- * API Contract notes:
- *   - auto-publishes (status: open) if company.status === verified at POST time
- *   - otherwise queued as pendingApproval
- *   - criteria edits never cascade to existing eligibilitySnapshot (invariant #3)
  */
 
 /**
@@ -63,12 +64,74 @@ const criteriaSchema = new Schema(
   { _id: false }, // embedded — no independent identity
 );
 
+/**
+ * Off-campus verification — embedded subdocument for student-submitted opportunities.
+ */
+const offCampusVerificationSchema = new Schema(
+  {
+    status: {
+      type: String,
+      enum: {
+        values: Object.values(OFF_CAMPUS_VERIFICATION_STATUS),
+        message: 'Invalid off-campus verification status',
+      },
+      default: OFF_CAMPUS_VERIFICATION_STATUS.PENDING,
+    },
+    submittedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'StudentProfile',
+      default: null,
+    },
+    submittedAt: {
+      type: Date,
+      default: null,
+    },
+    evidenceUrl: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+    verifiedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    verifiedAt: {
+      type: Date,
+      default: null,
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+      default: null,
+    },
+  },
+  { _id: false },
+);
+
 const internshipSchema = new Schema(
   {
+    source: {
+      type: String,
+      enum: {
+        values: Object.values(INTERNSHIP_SOURCE),
+        message: 'Source must be one of: ' + Object.values(INTERNSHIP_SOURCE).join(', '),
+      },
+      default: INTERNSHIP_SOURCE.CAMPUS,
+      required: [true, 'Source is required'],
+    },
+
     companyId: {
       type: Schema.Types.ObjectId,
       ref: 'CompanyProfile',
-      required: [true, 'Company reference is required'],
+      default: null,
+    },
+
+    externalCompanyName: {
+      type: String,
+      trim: true,
+      maxlength: [300, 'Company name must be at most 300 characters'],
+      default: null,
     },
 
     title: {
@@ -125,14 +188,14 @@ const internshipSchema = new Schema(
       default: INTERNSHIP_STATUS.PENDING_APPROVAL,
     },
 
-    /**
-     * criteria — embedded, not referenced.
-     * Data_Model.md: "embedded, not referenced, because criteria has
-     * no independent identity or lifecycle outside its posting."
-     */
     criteria: {
       type: criteriaSchema,
       default: () => ({}),
+    },
+
+    offCampusVerification: {
+      type: offCampusVerificationSchema,
+      default: null,
     },
   },
   {
@@ -142,11 +205,10 @@ const internshipSchema = new Schema(
 );
 
 // ── Indexes ────────────────────────────────────────────────────────────────
-// Data_Model.md: Internship{companyId, status}
 internshipSchema.index({ companyId: 1, status: 1 });
-// Supports GET /tnp/internships/pending-approval filter
 internshipSchema.index({ status: 1 });
-// Student browse: open internships sorted by date
 internshipSchema.index({ status: 1, lastDate: 1 });
+internshipSchema.index({ source: 1 });
+internshipSchema.index({ 'offCampusVerification.status': 1 });
 
 export const Internship = mongoose.model('Internship', internshipSchema);

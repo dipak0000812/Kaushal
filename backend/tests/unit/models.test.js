@@ -24,6 +24,8 @@ import {
   USER_STATUS,
   INTERNSHIP_STATUS,
   INTERNSHIP_MODE,
+  INTERNSHIP_SOURCE,
+  OFF_CAMPUS_VERIFICATION_STATUS,
   APPLICATION_STATUS,
   TERMINAL_STATUSES,
   ACTIVE_STATUSES,
@@ -71,6 +73,21 @@ describe('Domain constants (utils/constants.js)', () => {
       assert.equal(USER_STATUS.ACTIVE, 'active');
       assert.equal(USER_STATUS.PENDING, 'pending');
       assert.equal(USER_STATUS.VERIFIED, 'verified');
+    });
+  });
+
+  describe('INTERNSHIP_SOURCE', () => {
+    it('has campus and off_campus', () => {
+      assert.equal(INTERNSHIP_SOURCE.CAMPUS, 'campus');
+      assert.equal(INTERNSHIP_SOURCE.OFF_CAMPUS, 'off_campus');
+    });
+  });
+
+  describe('OFF_CAMPUS_VERIFICATION_STATUS', () => {
+    it('has pendingVerification, verified, rejected', () => {
+      assert.equal(OFF_CAMPUS_VERIFICATION_STATUS.PENDING, 'pendingVerification');
+      assert.equal(OFF_CAMPUS_VERIFICATION_STATUS.VERIFIED, 'verified');
+      assert.equal(OFF_CAMPUS_VERIFICATION_STATUS.REJECTED, 'rejected');
     });
   });
 
@@ -328,10 +345,9 @@ describe('CompanyProfile model', () => {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 describe('Internship model', () => {
-  it('requires companyId, title, description, duration, mode, vacancies, lastDate', async () => {
+  it('requires title, description, duration, mode, vacancies, lastDate', async () => {
     const i = new Internship({});
     const err = await i.validate().catch((e) => e);
-    assert.ok(err.errors.companyId);
     assert.ok(err.errors.title);
     assert.ok(err.errors.description);
     assert.ok(err.errors.duration);
@@ -340,12 +356,48 @@ describe('Internship model', () => {
     assert.ok(err.errors.lastDate);
   });
 
-  it('defaults status to pendingApproval', () => {
+  it('defaults status to pendingApproval and source to campus', () => {
     const i = new Internship({
       companyId: fakeId(), title: 'T', description: 'D',
       duration: '2mo', mode: 'remote', vacancies: 1, lastDate: new Date(),
     });
     assert.equal(i.status, INTERNSHIP_STATUS.PENDING_APPROVAL);
+    assert.equal(i.source, INTERNSHIP_SOURCE.CAMPUS);
+  });
+
+  it('accepts valid off_campus internship with externalCompanyName and offCampusVerification', async () => {
+    const studentProfileId = fakeId();
+    const i = new Internship({
+      source: INTERNSHIP_SOURCE.OFF_CAMPUS,
+      externalCompanyName: 'Acme External Corp',
+      title: 'Off-campus Software Engineer Intern',
+      description: 'Full stack development',
+      duration: '6 months',
+      mode: 'remote',
+      vacancies: 1,
+      lastDate: new Date(),
+      offCampusVerification: {
+        status: OFF_CAMPUS_VERIFICATION_STATUS.PENDING,
+        submittedBy: studentProfileId,
+        submittedAt: new Date(),
+        evidenceUrl: 'https://docs.google.com/offer-letter.pdf',
+      },
+    });
+    const err = await i.validate().catch((e) => e);
+    assert.equal(err, undefined, 'Off-campus internship should pass schema validation');
+    assert.equal(i.source, 'off_campus');
+    assert.equal(i.externalCompanyName, 'Acme External Corp');
+    assert.equal(i.offCampusVerification.status, 'pendingVerification');
+  });
+
+  it('rejects invalid source enum value', async () => {
+    const i = new Internship({
+      source: 'invalid_source',
+      title: 'T', description: 'D',
+      duration: '2mo', mode: 'remote', vacancies: 1, lastDate: new Date(),
+    });
+    const err = await i.validate().catch((e) => e);
+    assert.ok(err?.errors?.source, 'Should reject invalid source');
   });
 
   it('rejects invalid mode', async () => {
@@ -387,6 +439,14 @@ describe('Internship model', () => {
       spec.companyId === 1 && spec.status === 1,
     );
     assert.ok(hasCompound, 'Missing compound index on {companyId, status}');
+  });
+
+  it('has index on source and offCampusVerification.status', () => {
+    const indexes = Internship.schema.indexes();
+    const hasSource = indexes.some(([spec]) => spec.source === 1);
+    const hasStatus = indexes.some(([spec]) => spec['offCampusVerification.status'] === 1);
+    assert.ok(hasSource, 'Missing index on source');
+    assert.ok(hasStatus, 'Missing index on offCampusVerification.status');
   });
 });
 
