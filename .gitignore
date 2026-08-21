@@ -1,6 +1,15 @@
 node_modules/
 .env
+.env*
 *.log
 .DS_Store
 coverage/
 dist/
+
+
+# Environment files
+.env
+.env.*
+!.env.example
+backend/.env
+docs/development/

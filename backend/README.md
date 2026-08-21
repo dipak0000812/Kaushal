@@ -1,4 +1,4 @@
-# TrackIntern — Backend
+# Kaushal — Backend
 
 Institutional internship lifecycle control system, built for the GHR
 Inter-Track Hackathon (21 Aug 2026). This repository is backend + database
