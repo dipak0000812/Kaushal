@@ -16,8 +16,30 @@ import {
   LogOut, 
   User as UserIcon,
   ShieldCheck,
-  Building2
+  Building2,
+  Bell,
+  ChevronDown
 } from 'lucide-react';
+
+const getRoleDisplayName = (role: Role) => {
+  switch (role) {
+    case Role.TNP: return 'T&P Officer';
+    case Role.HOD: return 'HOD (CS)';
+    case Role.FACULTY: return 'Faculty Mentor';
+    default: return role.toUpperCase();
+  }
+};
+
+function decodeJwt(token: string): any {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(payload);
+  } catch (e) {
+    return null;
+  }
+}
 
 interface RoleShellProps {
   role: Role;
@@ -33,6 +55,34 @@ interface NavItem {
 export default function RoleShell({ role, children }: RoleShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+
+  const [userName, setUserName] = React.useState('');
+  const [userInitials, setUserInitials] = React.useState('');
+
+  React.useEffect(() => {
+    const getCookie = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+      return null;
+    };
+    const token = getCookie('kaushal_token') || getCookie('token');
+    if (token) {
+      const decoded = decodeJwt(token);
+      if (decoded && decoded.name) {
+        setUserName(decoded.name);
+        const nameParts = decoded.name.split(' ');
+        const initials = nameParts.map((n: string) => n[0]).join('').toUpperCase();
+        setUserInitials(initials.slice(0, 2));
+      }
+    }
+  }, []);
+
+  const defaultName = getRoleDisplayName(role);
+  const defaultInitials = role.slice(0, 2).toUpperCase();
+
+  const currentUserName = userName || defaultName;
+  const currentUserInitials = userInitials || defaultInitials;
 
   // Define nav items for each role
   const getNavItems = (): NavItem[] => {
@@ -82,14 +132,7 @@ export default function RoleShell({ role, children }: RoleShellProps) {
     router.push('/login');
   };
 
-  const getRoleDisplayName = () => {
-    switch (role) {
-      case Role.TNP: return 'T&P Officer';
-      case Role.HOD: return 'HOD (CS)';
-      case Role.FACULTY: return 'Faculty Mentor';
-      default: return role.toUpperCase();
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex text-[#0F172A]">
@@ -109,7 +152,8 @@ export default function RoleShell({ role, children }: RoleShellProps) {
         {/* Nav Items */}
         <nav className="flex-1 px-4 py-6 space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + '/');
+            const isDashboard = ['/student', '/company', '/faculty', '/tp', '/hod'].includes(item.href);
+            const isActive = isDashboard ? pathname === item.href : (pathname === item.href || pathname.startsWith(item.href + '/'));
             const Icon = item.icon;
             return (
               <Link
@@ -131,12 +175,12 @@ export default function RoleShell({ role, children }: RoleShellProps) {
         {/* User profile footer */}
         <div className="p-4 border-t border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-2">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-semibold text-sm">
-              <UserIcon className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-bold text-xs shadow-inner">
+              {currentUserInitials}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-semibold text-[#475569] truncate">
-                {getRoleDisplayName()}
+                {currentUserName}
               </p>
               <p className="text-[11px] text-[#94A3B8] truncate leading-tight">
                 {role}@ghr.edu
@@ -175,8 +219,25 @@ export default function RoleShell({ role, children }: RoleShellProps) {
                 Admin Mode
               </span>
             )}
+            <span className="text-xs font-medium text-[#64748B]">GHR COE Nagpur</span>
             <div className="w-px h-6 bg-[#E2E8F0]"></div>
-            <span className="text-xs font-medium text-[#475569]">GHR COE Nagpur</span>
+            
+            {/* Grouped control container on the right edge */}
+            <div className="flex items-center gap-3">
+              <button className="text-[#64748B] hover:text-[#0F172A] relative transition-colors cursor-pointer p-1">
+                <Bell className="w-4 h-4" />
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#EA580C] rounded-full"></span>
+              </button>
+              <div className="flex items-center gap-2 cursor-pointer select-none group">
+                <div className="w-8 h-8 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-bold text-xs shadow-inner">
+                  {currentUserInitials}
+                </div>
+                <span className="text-xs font-semibold text-[#334155] group-hover:text-[#0F172A] transition-colors max-w-[120px] truncate font-sans">
+                  {currentUserName}
+                </span>
+                <ChevronDown className="w-3.5 h-3.5 text-[#64748B] group-hover:text-[#0F172A] transition-colors" />
+              </div>
+            </div>
           </div>
         </header>
 
