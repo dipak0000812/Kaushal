@@ -15,7 +15,7 @@ import { APPLICATION_STATUS } from '../../utils/constants.js';
  * API Contract §1 T&P: /tnp/applications/:id/verify-offer — valid from accepted.
  * Note: this queue shows offers so T&P can track what's coming.
  */
-export async function getVerificationQueue(req, res) {
+export async function getVerificationQueue(req, res, next) {
   try {
     // T&P verifies offers that are in 'accepted' state (student accepted, T&P next)
     const applications = await Application.find(
@@ -69,7 +69,7 @@ export async function getVerificationQueue(req, res) {
 
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -79,7 +79,7 @@ export async function getVerificationQueue(req, res) {
  * Applications in tnpVerified with no active mentor assignment.
  * API Contract §1 T&P: /tnp/assignments/unassigned
  */
-export async function getUnassignedQueue(req, res) {
+export async function getUnassignedQueue(req, res, next) {
   try {
     const applications = await Application.find(
       { currentStatus: APPLICATION_STATUS.TNP_VERIFIED },
@@ -128,7 +128,7 @@ export async function getUnassignedQueue(req, res) {
 
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -137,7 +137,7 @@ export async function getUnassignedQueue(req, res) {
  *
  * Formats the most urgent alert into an action string.
  */
-export async function getTnpWhatsNext(req, res) {
+export async function getTnpWhatsNext(req, res, next) {
   try {
     const alerts = await getTnpAlerts();
 
@@ -158,7 +158,7 @@ export async function getTnpWhatsNext(req, res) {
       data: { action, alerts: alertList },
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -168,7 +168,7 @@ export async function getTnpWhatsNext(req, res) {
  * All students across all departments.
  * API Contract: T&P has full visibility (role matrix §3).
  */
-export async function getAllStudents(req, res) {
+export async function getAllStudents(req, res, next) {
   try {
     const profiles = await StudentProfile.find({}).lean();
 
@@ -200,7 +200,7 @@ export async function getAllStudents(req, res) {
 
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -209,7 +209,7 @@ export async function getAllStudents(req, res) {
  *
  * All internships across all companies.
  */
-export async function getAllInternships(req, res) {
+export async function getAllInternships(req, res, next) {
   try {
     const internships = await Internship.find({}).lean();
 
@@ -239,6 +239,6 @@ export async function getAllInternships(req, res) {
 
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }

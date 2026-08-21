@@ -237,6 +237,16 @@ export default function LoginPage() {
               ))}
             </div>
           </div>
+
+          {/* Registration navigation */}
+          <div className="mt-6 border-t border-slate-800 pt-4 flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400 gap-2">
+            <a href="/register" className="hover:text-white font-semibold transition-colors">
+              New Student? Self-Register &rarr;
+            </a>
+            <a href="/register/company" className="text-violet-400 hover:text-violet-300 font-semibold transition-colors">
+              Company with Invite Token? &rarr;
+            </a>
+          </div>
         </div>
       </div>
     </div>

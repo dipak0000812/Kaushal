@@ -28,6 +28,13 @@ export enum ApplicationStatus {
   CANCELLED = 'cancelled',
 }
 
+// Off-Campus Verification Status Enum
+export enum OffCampusVerificationStatus {
+  PENDING = 'pendingVerification',
+  VERIFIED = 'verified',
+  REJECTED = 'rejected',
+}
+
 // Allowed transitions lookup table
 export const ALLOWED_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
   [ApplicationStatus.APPLIED]: [
@@ -73,17 +80,6 @@ export const ALLOWED_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]>
   [ApplicationStatus.CANCELLED]: [],
 };
 
-// TODO: no endpoint exists yet for inProgress -> completed (contract
-// gap, flagged to backend). Do not render a "Complete" action until
-// this is confirmed and added.
-//
-// ASSUMPTION: contract says progress-logs are only valid once
-// currentStatus === inProgress, but also says the first progress log
-// triggers mentorAssigned -> inProgress. Treating the first successful
-// submit-progress call while mentorAssigned as the implicit trigger —
-// frontend should refetch/optimistically update currentStatus after a
-// successful submission from this state. Confirm with backend once
-// this endpoint exists.
 export const ALLOWED_ACTIONS: Record<ApplicationStatus, string[]> = {
   [ApplicationStatus.APPLIED]: ['shortlist', 'reject', 'cancel'],
   [ApplicationStatus.SHORTLISTED]: ['offer', 'reject', 'cancel'],
@@ -101,10 +97,6 @@ export const ALLOWED_ACTIONS: Record<ApplicationStatus, string[]> = {
 
 export type CriterionValue = number | string | string[];
 
-// ASSUMED shape — Data_Model.md confirms eligibilitySnapshot.checks[]
-// exists but not its internal fields. Not yet verified against backend.
-// Confirm against real API response once backend eligibility endpoint
-// is live, before relying on this shape anywhere beyond rendering.
 export interface EligibilityCheck {
   criterion: string;
   passed: boolean;
@@ -168,8 +160,9 @@ export interface User {
   id: string;
   email: string;
   role: Role;
-  status: 'active' | 'pending';
+  status: 'active' | 'pending' | 'verified';
   department?: string;
+  name?: string;
 }
 
 // Student Profile
@@ -190,19 +183,22 @@ export interface StudentProfile {
 
 // Company Profile
 export interface CompanyProfile {
-  id: string;
+  id?: string;
+  _id?: string;
   userId: string;
   companyName: string;
   contactEmail: string;
-  status: 'pending' | 'verified';
+  website?: string;
+  status?: 'pending' | 'verified';
 }
 
 // Internship Criteria
 export interface InternshipCriteria {
   minCgpa: number;
   maxBacklogs: number;
-  department: string;
-  year: number;
+  department?: string;
+  departments?: string[];
+  year?: number;
   requiredSkills: string[];
   requiredCerts: string[];
 }
@@ -212,14 +208,40 @@ export type InternshipStatus = 'pendingApproval' | 'open' | 'closed' | 'cancelle
 
 export interface Internship {
   id: string;
-  companyId: string;
+  _id?: string;
+  companyId?: string | any;
   title: string;
+  description?: string;
+  duration?: string;
+  mode?: string;
   companyName?: string; // Derived/populated field
-  criteria: InternshipCriteria;
+  externalCompanyName?: string;
+  source?: 'campus' | 'off_campus';
+  criteria?: InternshipCriteria;
   status: InternshipStatus;
-  vacancies: number;
-  lastDate: string;
+  vacancies?: number;
+  lastDate?: string;
   createdAt?: string;
+  offCampusVerification?: {
+    status: OffCampusVerificationStatus;
+    submittedBy?: any;
+    submittedAt?: string;
+    evidenceUrl?: string | null;
+    verifiedBy?: string | null;
+    verifiedAt?: string | null;
+    rejectReason?: string | null;
+  };
+}
+
+// Off-Campus Opportunity registered by student
+export interface OffCampusOpportunity extends Internship {
+  application?: {
+    _id: string;
+    id?: string;
+    currentStatus: ApplicationStatus;
+    ppoOffered?: boolean;
+    createdAt?: string;
+  } | null;
 }
 
 // Application Timeline Event
@@ -235,26 +257,30 @@ export interface TimelineEvent {
 // Application Entity
 export interface Application {
   id: string;
-  studentId: string;
+  _id?: string;
+  studentId: string | any;
   studentName?: string; // Derived/populated
-  internshipId: string;
+  studentDept?: string;
+  internshipId: string | any;
   internshipTitle?: string; // Derived/populated
+  companyName?: string;
   currentStatus: ApplicationStatus;
   timeline: TimelineEvent[];
-  eligibilitySnapshot: EligibilitySnapshot;
+  eligibilitySnapshot?: EligibilitySnapshot;
   override?: EligibilityOverride | null;
   ppoOffered?: boolean;
 }
 
 // Progress Log Evidence
 export interface ProgressEvidence {
-  type: string; // e.g. "file" | "link"
+  type: string; // e.g. "file" | "link" | "github_pr" | "report_pdf"
   value: string; // e.g. URL or text
 }
 
 // Progress Log Entity
 export interface ProgressLog {
   id: string;
+  _id?: string;
   applicationId: string;
   weekLabel: string;
   description: string;

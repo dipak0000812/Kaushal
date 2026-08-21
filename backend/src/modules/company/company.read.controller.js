@@ -11,7 +11,9 @@ import { APPLICATION_STATUS, ACTIVE_STATUSES } from '../../utils/constants.js';
  * Returns all internships owned by this company with vacancy and application counts.
  * Scope enforced via companyId === req.user.userId (Architecture.md invariant #7).
  */
-export async function getMyInternships(req, res) {
+import { NotFoundError, ForbiddenError } from '../../core/errors.js';
+
+export async function getMyInternships(req, res, next) {
   try {
     // companyId on Internship refs CompanyProfile._id — look up the profile first
     const companyProfile = await CompanyProfile.findOne(
@@ -19,7 +21,7 @@ export async function getMyInternships(req, res) {
     ).lean();
 
     if (!companyProfile) {
-      return res.status(404).json({ error: 'Company profile not found' });
+      throw new NotFoundError('Company profile not found');
     }
 
     const internships = await Internship.find(
@@ -47,7 +49,7 @@ export async function getMyInternships(req, res) {
 
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -61,24 +63,24 @@ export async function getMyInternships(req, res) {
  *
  * Effective eligibility = override?.eligible ?? eligibilitySnapshot.eligible
  */
-export async function getApplicants(req, res) {
+export async function getApplicants(req, res, next) {
   try {
     const companyProfile = await CompanyProfile.findOne(
       { userId: req.user.userId },
     ).lean();
 
     if (!companyProfile) {
-      return res.status(404).json({ error: 'Company profile not found' });
+      throw new NotFoundError('Company profile not found');
     }
 
     const internship = await Internship.findById(req.params.id).lean();
 
     if (!internship) {
-      return res.status(404).json({ error: 'Internship not found' });
+      throw new NotFoundError('Internship not found');
     }
 
     if (internship.companyId.toString() !== companyProfile._id.toString()) {
-      return res.status(403).json({ error: 'Access denied: internship does not belong to your company' });
+      throw new ForbiddenError('Access denied: internship does not belong to your company');
     }
 
     const applications = await Application.find(
@@ -169,14 +171,14 @@ export async function getApplicants(req, res) {
  *
  * One-line action prompt for the company home screen.
  */
-export async function getCompanyWhatsNext(req, res) {
+export async function getCompanyWhatsNext(req, res, next) {
   try {
     const companyProfile = await CompanyProfile.findOne(
       { userId: req.user.userId },
     ).lean();
 
     if (!companyProfile) {
-      return res.status(200).json({ success: true, data: { action: 'Set up your company profile to get started.' } });
+      throw new NotFoundError('Company profile not found');
     }
 
     const internships = await Internship.find(
@@ -214,7 +216,7 @@ export async function getCompanyWhatsNext(req, res) {
 
     return res.status(200).json({ success: true, data: { action } });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -223,14 +225,14 @@ export async function getCompanyWhatsNext(req, res) {
  *
  * Aggregate pipeline stats for this company's postings.
  */
-export async function getCompanyAnalytics(req, res) {
+export async function getCompanyAnalytics(req, res, next) {
   try {
     const companyProfile = await CompanyProfile.findOne(
       { userId: req.user.userId },
     ).lean();
 
     if (!companyProfile) {
-      return res.status(404).json({ error: 'Company profile not found' });
+      throw new NotFoundError('Company profile not found');
     }
 
     const internships = await Internship.find(
@@ -319,6 +321,6 @@ export async function getCompanyAnalytics(req, res) {
       },
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }

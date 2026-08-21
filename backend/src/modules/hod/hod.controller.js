@@ -1,6 +1,8 @@
 // FILE: src/modules/hod/hod.controller.js
 import { getHodDepartmentDashboard } from '../analytics/analytics.service.js';
 
+import { ValidationError } from '../../core/errors.js';
+
 /**
  * GET /api/v1/hod/dashboard
  *
@@ -8,21 +10,16 @@ import { getHodDepartmentDashboard } from '../analytics/analytics.service.js';
  * department MUST come from req.user.department — never from query params or body.
  * (Architecture.md invariant #7)
  */
-export async function getDashboard(req, res) {
+export async function getDashboard(req, res, next) {
   try {
     const department = req.user.department;
     if (!department) {
-      return res.status(400).json({
-        error: 'Department not set on your account. Contact T&P to update your profile.',
-      });
+      throw new ValidationError('Department not set on your account. Contact T&P to update your profile.');
     }
 
     const data = await getHodDepartmentDashboard(department);
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    if (err.code === 'VALIDATION_ERROR' || err.status === 400) {
-      return res.status(400).json({ error: err.message });
-    }
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }

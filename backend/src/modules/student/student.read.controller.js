@@ -13,7 +13,7 @@ import { INTERNSHIP_STATUS, APPLICATION_STATUS } from '../../utils/constants.js'
  * Eligible internships are sorted first.
  * API Contract §1 student: "list open internships + live-computed eligibility.eligible badge"
  */
-export async function getInternships(req, res) {
+export async function getInternships(req, res, next) {
   try {
     const [internships, studentProfile] = await Promise.all([
       Internship.find({ status: INTERNSHIP_STATUS.OPEN }).lean(),
@@ -24,7 +24,11 @@ export async function getInternships(req, res) {
       const eligibility = evaluate(studentProfile, internship.criteria);
       return {
         ...internship,
-        eligibility: { eligible: eligibility.eligible, checks: eligibility.checks },
+        eligibility: {
+          eligible: eligibility.eligible,
+          checks: eligibility.checks,
+          computedAt: eligibility.computedAt,
+        },
       };
     });
 
@@ -36,7 +40,7 @@ export async function getInternships(req, res) {
 
     return res.status(200).json({ success: true, data: withEligibility });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -46,7 +50,7 @@ export async function getInternships(req, res) {
  * Full per-criterion eligibility breakdown for one internship.
  * API Contract §1 student: "full per-criterion breakdown, live-computed, not stored"
  */
-export async function getInternshipById(req, res) {
+export async function getInternshipById(req, res, next) {
   try {
     const [internship, studentProfile] = await Promise.all([
       Internship.findById(req.params.id).lean(),
@@ -54,7 +58,7 @@ export async function getInternshipById(req, res) {
     ]);
 
     if (!internship) {
-      return res.status(404).json({ error: 'Internship not found' });
+      throw new NotFoundError('Internship not found');
     }
 
     const eligibility = evaluate(studentProfile, internship.criteria);
@@ -71,7 +75,7 @@ export async function getInternshipById(req, res) {
       },
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -81,7 +85,7 @@ export async function getInternshipById(req, res) {
  * Returns all of this student's applications with full timeline.
  * API Contract §1 student: own applications, paginated, ?status= filter
  */
-export async function getMyApplications(req, res) {
+export async function getMyApplications(req, res, next) {
   try {
     const studentProfile = await StudentProfile.findOne({ userId: req.user.userId }).lean();
     const studentIds = [req.user.userId];
@@ -101,7 +105,7 @@ export async function getMyApplications(req, res) {
 
     return res.status(200).json({ success: true, data: applications });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -111,7 +115,7 @@ export async function getMyApplications(req, res) {
  * Deterministic action prompt for the student home screen.
  * Priority: offers waiting > applications in progress > eligible postings.
  */
-export async function getWhatsNext(req, res) {
+export async function getWhatsNext(req, res, next) {
   try {
     const studentProfile = await StudentProfile.findOne(
       { userId: req.user.userId },
@@ -175,6 +179,6 @@ export async function getWhatsNext(req, res) {
       },
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }

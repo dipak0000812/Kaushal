@@ -130,6 +130,16 @@ export async function applyToInternship(req, res, next) {
 export async function acceptOfferHandler(req, res, next) {
   try {
     const applicationId = req.params.id;
+    const application = await Application.findById(applicationId);
+    if (!application) {
+      throw new NotFoundError('Application not found');
+    }
+
+    const studentProfile = await StudentProfile.findOne({ userId: req.user.userId });
+    if (!studentProfile || application.studentId.toString() !== studentProfile._id.toString()) {
+      throw new ForbiddenError('You can only accept offers for your own applications');
+    }
+
     const actor = { id: req.user.userId, role: req.user.role };
 
     const result = await acceptOffer(applicationId, actor);
@@ -148,6 +158,16 @@ export async function acceptOfferHandler(req, res, next) {
 export async function declineOfferHandler(req, res, next) {
   try {
     const applicationId = req.params.id;
+    const application = await Application.findById(applicationId);
+    if (!application) {
+      throw new NotFoundError('Application not found');
+    }
+
+    const studentProfile = await StudentProfile.findOne({ userId: req.user.userId });
+    if (!studentProfile || application.studentId.toString() !== studentProfile._id.toString()) {
+      throw new ForbiddenError('You can only decline offers for your own applications');
+    }
+
     const actor = { id: req.user.userId, role: req.user.role };
 
     const updated = await applyTransition(

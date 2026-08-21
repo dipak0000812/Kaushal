@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api') ||
     pathname === '/' ||
     pathname === '/login' ||
-    pathname === '/register' ||
+    pathname.startsWith('/register') ||
     pathname.startsWith('/dev')
   ) {
     return NextResponse.next();

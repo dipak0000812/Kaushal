@@ -5,6 +5,8 @@ import {
   getHodDepartmentDashboard,
 } from './analytics.service.js';
 
+import { ValidationError } from '../../core/errors.js';
+
 /**
  * GET /api/v1/analytics/dashboard
  * Role: tnp
@@ -12,12 +14,12 @@ import {
  * Returns full T&P analytics dashboard:
  * applicationFunnel, skillGapReport, departmentStats, ppoOutcomes, companyStats.
  */
-export async function getTnpDashboard(req, res) {
+export async function getTnpDashboard(req, res, next) {
   try {
     const data = await dashboardService();
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -28,12 +30,12 @@ export async function getTnpDashboard(req, res) {
  * Returns alert counts: zeroEligibleApplicants, unassignedMentorCount,
  * pendingOfferVerification, atRiskCount.
  */
-export async function getTnpAlerts(req, res) {
+export async function getTnpAlerts(req, res, next) {
   try {
     const data = await alertsService();
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -44,20 +46,15 @@ export async function getTnpAlerts(req, res) {
  * Department is sourced ONLY from req.user.department — never from query params
  * or body (Architecture.md invariant #7).
  */
-export async function getHodDashboard(req, res) {
+export async function getHodDashboard(req, res, next) {
   try {
     const department = req.user.department;
     if (!department) {
-      return res.status(400).json({
-        error: 'Department not set on your account. Contact T&P to update your profile.',
-      });
+      throw new ValidationError('Department not set on your account. Contact T&P to update your profile.');
     }
     const data = await getHodDepartmentDashboard(department);
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    if (err.code === 'VALIDATION_ERROR' || err.status === 400) {
-      return res.status(400).json({ error: err.message });
-    }
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }

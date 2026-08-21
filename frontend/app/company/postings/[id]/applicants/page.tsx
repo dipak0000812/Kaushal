@@ -185,9 +185,9 @@ export default function ApplicantsPage({ params }: Props) {
               <span className="text-[10px] text-[#94A3B8] font-mono">Job Code: {internship.id}</span>
               <h2 className="text-base font-bold text-[#0F172A] mt-1">Internship Criteria requirements</h2>
               <p className="text-xs text-[#64748B] mt-0.5">
-                Minimum CGPA Required: <strong>{internship.criteria.minCgpa}</strong> | 
-                Max Backlogs: <strong>{internship.criteria.maxBacklogs}</strong> |
-                Branch / Dept: <strong>{internship.criteria.department}</strong>
+                Minimum CGPA Required: <strong>{internship?.criteria?.minCgpa ?? 0}</strong> | 
+                Max Backlogs: <strong>{internship?.criteria?.maxBacklogs ?? 0}</strong> |
+                Branch / Dept: <strong>{Array.isArray(internship?.criteria?.departments) ? internship?.criteria?.departments.join(', ') : (internship?.criteria?.department || 'Any')}</strong>
               </p>
             </div>
             <div className="flex items-center gap-3">

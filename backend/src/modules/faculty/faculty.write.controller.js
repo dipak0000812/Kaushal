@@ -150,6 +150,16 @@ export async function verifyProgressLog(req, res, next) {
       throw new NotFoundError('Progress log not found');
     }
 
+    const assignment = await MentorAssignment.findOne({
+      applicationId: log.applicationId,
+      facultyId: req.user.userId,
+      status: MENTOR_ASSIGNMENT_STATUS.ACCEPTED,
+    });
+
+    if (!assignment) {
+      throw new ForbiddenError('Access denied: you are not the assigned mentor for this student');
+    }
+
     log.verified = true;
     log.verifiedBy = req.user.userId;
     log.verifiedAt = new Date();

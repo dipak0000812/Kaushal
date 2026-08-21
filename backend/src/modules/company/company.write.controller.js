@@ -172,12 +172,36 @@ export async function closeInternship(req, res, next) {
 }
 
 /**
+ * Helper to ensure the calling company owns the internship associated with an application.
+ */
+async function verifyCompanyApplicationOwnership(userId, applicationId) {
+  const companyProfile = await CompanyProfile.findOne({ userId });
+  if (!companyProfile) {
+    throw new NotFoundError('Company profile not found');
+  }
+
+  const application = await Application.findById(applicationId).populate('internshipId');
+  if (!application) {
+    throw new NotFoundError('Application not found');
+  }
+
+  const internshipCompanyId = application.internshipId?.companyId?.toString();
+  if (!internshipCompanyId || internshipCompanyId !== companyProfile._id.toString()) {
+    throw new ForbiddenError('You can only manage applicants for your own company internships');
+  }
+
+  return { companyProfile, application };
+}
+
+/**
  * PATCH /api/v1/company/applications/:id/shortlist
  * Shortlist applicant (applied -> shortlisted).
  */
 export async function shortlistApplicant(req, res, next) {
   try {
     const applicationId = req.params.id;
+    await verifyCompanyApplicationOwnership(req.user.userId, applicationId);
+
     const actor = { id: req.user.userId, role: req.user.role };
 
     const updated = await applyTransition(
@@ -201,6 +225,8 @@ export async function shortlistApplicant(req, res, next) {
 export async function rejectApplicant(req, res, next) {
   try {
     const applicationId = req.params.id;
+    await verifyCompanyApplicationOwnership(req.user.userId, applicationId);
+
     const { reason } = req.body ?? {};
     const actor = { id: req.user.userId, role: req.user.role };
 
@@ -226,6 +252,8 @@ export async function rejectApplicant(req, res, next) {
 export async function offerApplicant(req, res, next) {
   try {
     const applicationId = req.params.id;
+    await verifyCompanyApplicationOwnership(req.user.userId, applicationId);
+
     const actor = { id: req.user.userId, role: req.user.role };
 
     const updated = await applyTransition(
@@ -249,12 +277,8 @@ export async function offerApplicant(req, res, next) {
 export async function evaluateApplication(req, res, next) {
   try {
     const applicationId = req.params.id;
+    const { application } = await verifyCompanyApplicationOwnership(req.user.userId, applicationId);
     const { rating, ppoRecommended } = req.body ?? {};
-
-    const application = await Application.findById(applicationId);
-    if (!application) {
-      throw new NotFoundError('Application not found');
-    }
 
     if (ppoRecommended !== undefined) {
       application.ppoOffered = !!ppoRecommended;

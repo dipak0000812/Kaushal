@@ -16,7 +16,10 @@ export async function authenticate(req, res, next) {
   try {
     const header = req.headers.authorization;
     if (!header || !header.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authorization token required' });
+      return res.status(401).json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Authorization token required' },
+      });
     }
 
     const token = header.slice(7);
@@ -24,13 +27,19 @@ export async function authenticate(req, res, next) {
     try {
       payload = jwt.verify(token, env.JWT_SECRET);
     } catch {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      return res.status(401).json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'Invalid or expired token' },
+      });
     }
 
     // Load user from DB — department is not trusted from token
     const user = await User.findById(payload.userId).lean();
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      return res.status(401).json({
+        success: false,
+        error: { code: 'UNAUTHORIZED', message: 'User not found' },
+      });
     }
 
     req.user = {
@@ -43,6 +52,9 @@ export async function authenticate(req, res, next) {
 
     next();
   } catch (err) {
-    return res.status(500).json({ error: 'Authentication error' });
+    return res.status(500).json({
+      success: false,
+      error: { code: 'INTERNAL_SERVER_ERROR', message: 'Authentication error' },
+    });
   }
 }

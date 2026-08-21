@@ -15,7 +15,9 @@ import { MENTOR_ASSIGNMENT_STATUS, APPLICATION_STATUS } from '../../utils/consta
  * Returns all students assigned to this faculty mentor with live risk.
  * MentorAssignment.facultyId holds the faculty User._id.
  */
-export async function getAssignedStudents(req, res) {
+import { ForbiddenError } from '../../core/errors.js';
+
+export async function getAssignedStudents(req, res, next) {
   try {
     const assignments = await MentorAssignment.find({
       facultyId: req.user.userId,
@@ -85,7 +87,7 @@ export async function getAssignedStudents(req, res) {
 
     return res.status(200).json({ success: true, data });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -95,7 +97,7 @@ export async function getAssignedStudents(req, res) {
  * Returns all progress logs for one assigned student's application.
  * Faculty must be the accepted assigned mentor for this application.
  */
-export async function getStudentProgress(req, res) {
+export async function getStudentProgress(req, res, next) {
   try {
     // Verify faculty owns this assignment
     const assignment = await MentorAssignment.findOne({
@@ -105,9 +107,7 @@ export async function getStudentProgress(req, res) {
     }).lean();
 
     if (!assignment) {
-      return res.status(403).json({
-        error: 'Access denied: you are not the assigned mentor for this application',
-      });
+      throw new ForbiddenError('Access denied: you are not the assigned mentor for this application');
     }
 
     const logs = await ProgressLog.find(
@@ -116,7 +116,7 @@ export async function getStudentProgress(req, res) {
 
     return res.status(200).json({ success: true, data: logs });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }
 
@@ -125,7 +125,7 @@ export async function getStudentProgress(req, res) {
  *
  * Action prompt for the faculty home screen.
  */
-export async function getFacultyWhatsNext(req, res) {
+export async function getFacultyWhatsNext(req, res, next) {
   try {
     const assignments = await MentorAssignment.find({
       facultyId: req.user.userId,
@@ -177,6 +177,6 @@ export async function getFacultyWhatsNext(req, res) {
       },
     });
   } catch (err) {
-    return res.status(500).json({ error: err.message });
+    next(err);
   }
 }

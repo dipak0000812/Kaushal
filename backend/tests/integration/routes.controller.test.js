@@ -168,7 +168,7 @@ describe('Risk Routes (/api/risk & /api/v1/risk)', () => {
     });
     assert.equal(res.status, 400);
     const body = await res.json();
-    assert.equal(body.error, 'Dismissal note is required');
+    assert.equal(body.error?.message || body.error, 'Dismissal note is required');
   });
 
   it('PATCH /api/risk/:id/dismiss returns 403 if faculty is not assigned mentor', async () => {

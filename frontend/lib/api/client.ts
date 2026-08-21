@@ -175,7 +175,15 @@ export const apiClient = {
     getWhatsNext: () =>
       request<{ action: string; counts: { eligible: number; applied: number; offered: number } }>('/student/whats-next', 'GET'),
 
-    submitOffCampusOpportunity: (body: { companyName: string; title: string; duration?: string; mode?: string; roleDescription?: string; offerLetterUrl?: string }) =>
+    submitOffCampusOpportunity: (body: {
+      companyName: string;
+      title: string;
+      description: string;
+      duration: string;
+      mode: string;
+      stipend?: number;
+      evidenceUrl?: string;
+    }) =>
       request<any>('/student/off-campus-opportunities', 'POST', body),
 
     getOffCampusOpportunities: () =>
