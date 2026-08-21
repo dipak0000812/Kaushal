@@ -1,4 +1,4 @@
-# TrackIntern — API Contract 
+# Kaushal — API Contract 
 
 Base path: `/api/v1`. All protected routes require `Authorization: Bearer <JWT>`. All responses: `{ success, data, error }`. Errors: `{ success: false, error: { code, message, details? } }`. Standard HTTP codes: 400 validation, 401 unauth, 403 forbidden-role-or-scope, 404, 409 conflict/invalid-transition, 422 business-rule-violation.
 
