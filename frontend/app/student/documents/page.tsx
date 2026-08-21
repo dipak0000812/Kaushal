@@ -7,6 +7,7 @@ import { Role } from '@/lib/types';
 import RoleShell from '@/components/shared/RoleShell';
 import EvidenceCard from '@/components/shared/EvidenceCard';
 import { FileUp, Info } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function StudentDocumentsPage() {
   // 1. Fetch applications
@@ -22,9 +23,7 @@ export default function StudentDocumentsPage() {
   const studentLogs = mockProgressLogs.filter(log => studentAppIds.includes(log.applicationId));
 
   const handleUploadClick = () => {
-    alert(
-      'Document Upload Gated:\nUpload action is disabled pending backend decision regarding secure file storage policies.'
-    );
+    toast.error('Document Upload Gated: Upload action is disabled pending backend decision regarding secure file storage policies.');
   };
 
   return (

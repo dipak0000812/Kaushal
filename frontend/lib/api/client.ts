@@ -17,7 +17,7 @@ import {
   EligibilityCheck
 } from '../types';
 
-export const USE_MOCKS = true;
+export const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS !== 'false';
 
 // Helper to retrieve auth token
 function getToken(): string | null {
@@ -90,12 +90,12 @@ function mockResponse<T>(data: T): ApiResponse<T> {
 export let mockStudentProfile: StudentProfile = {
   id: 'student-1',
   userId: 'user-student-1',
-  name: 'Rahul Sharma',
+  name: 'Arjun Mehta',
   department: 'Computer Science',
   year: 4,
-  cgpa: 8.7,
+  cgpa: 7.9,
   backlogs: 0,
-  skills: ['React', 'TypeScript', 'Node.js', 'MongoDB'],
+  skills: ['Python', 'React'],
   certifications: ['AWS Cloud Practitioner'],
   resumeUrl: 'https://example.com/resume.pdf',
 };
@@ -103,28 +103,29 @@ export let mockStudentProfile: StudentProfile = {
 export let mockCompanyProfile: CompanyProfile = {
   id: 'company-1',
   userId: 'user-company-1',
-  companyName: 'TCS',
-  contactEmail: 'hr@tcs.com',
-  status: 'pending',
+  companyName: 'Northbridge Systems',
+  contactEmail: 'hr@northbridge.demo',
+  status: 'verified',
 };
 
 export let mockCompanies: CompanyProfile[] = [
   mockCompanyProfile,
-  { id: 'company-2', userId: 'user-company-2', companyName: 'Infosys', contactEmail: 'hr@infosys.com', status: 'pending' },
-  { id: 'company-3', userId: 'user-company-3', companyName: 'Google', contactEmail: 'hr@google.com', status: 'verified' }
+  { id: 'company-2', userId: 'user-company-2', companyName: 'Cascade Analytics', contactEmail: 'hr@cascade.demo', status: 'verified' },
+  { id: 'company-3', userId: 'user-company-3', companyName: 'Apex Cloud', contactEmail: 'hr@apex.demo', status: 'verified' }
 ];
 
 export let mockInternships: Internship[] = [
   {
     id: 'internship-1',
     companyId: 'company-1',
-    companyName: 'TCS',
+    companyName: 'Northbridge Systems',
+    title: 'Backend Intern',
     criteria: {
       minCgpa: 7.5,
-      maxBacklogs: 1,
+      maxBacklogs: 0,
       department: 'Computer Science',
       year: 4,
-      requiredSkills: ['React', 'Node.js'],
+      requiredSkills: ['SQL', 'Python'],
       requiredCerts: [],
     },
     status: 'open',
@@ -134,33 +135,35 @@ export let mockInternships: Internship[] = [
   {
     id: 'internship-2',
     companyId: 'company-2',
-    companyName: 'Infosys',
+    companyName: 'Cascade Analytics',
+    title: 'Frontend Intern',
     criteria: {
-      minCgpa: 8.0,
+      minCgpa: 7.5,
       maxBacklogs: 0,
-      department: 'Information Technology',
+      department: 'Computer Science',
       year: 4,
-      requiredSkills: ['Java', 'Spring Boot'],
+      requiredSkills: ['React', 'Python'],
       requiredCerts: [],
     },
-    status: 'pendingApproval',
+    status: 'open',
     vacancies: 5,
     lastDate: '2026-08-25',
   },
   {
     id: 'internship-3',
     companyId: 'company-3',
-    companyName: 'Google',
+    companyName: 'Apex Cloud',
+    title: 'Data Analyst',
     criteria: {
-      minCgpa: 9.0,
+      minCgpa: 7.0,
       maxBacklogs: 0,
       department: 'Computer Science',
       year: 4,
-      requiredSkills: ['C++', 'Algorithms'],
+      requiredSkills: ['Python'],
       requiredCerts: [],
     },
-    status: 'closed',
-    vacancies: 1,
+    status: 'open',
+    vacancies: 10,
     lastDate: '2026-08-10',
   },
 ];
@@ -169,22 +172,20 @@ export let mockApplications: Application[] = [
   {
     id: 'app-1',
     studentId: 'student-1',
-    studentName: 'Rahul Sharma',
+    studentName: 'Arjun Mehta',
     internshipId: 'internship-1',
-    internshipTitle: 'Frontend Developer at TCS',
+    internshipTitle: 'Backend Intern — Northbridge Systems',
     currentStatus: ApplicationStatus.APPLIED,
     timeline: [
       { fromStatus: null, toStatus: ApplicationStatus.APPLIED, actorId: 'user-student-1', actorRole: Role.STUDENT, at: '2026-08-16T10:00:00Z' }
     ],
     eligibilitySnapshot: {
-      eligible: true,
+      eligible: false,
       checks: [
-        { criterion: 'minCgpa', passed: true, message: 'CGPA is 8.7 (required >= 7.5)', value: 8.7, required: 7.5 },
-        { criterion: 'maxBacklogs', passed: true, message: 'Backlogs count is 0 (required <= 1)', value: 0, required: 1 },
+        { criterion: 'minCgpa', passed: true, message: 'CGPA is 7.9 (required >= 7.5)', value: 7.9, required: 7.5 },
+        { criterion: 'maxBacklogs', passed: true, message: 'Backlogs count is 0 (required <= 0)', value: 0, required: 0 },
         { criterion: 'department', passed: true, message: 'Department is Computer Science', value: 'Computer Science', required: 'Computer Science' },
-        { criterion: 'year', passed: true, message: 'Year is 4', value: 4, required: 4 },
-        { criterion: 'requiredSkills', passed: true, message: 'Skills overlap: React, Node.js', value: ['React', 'Node.js'], required: ['React', 'Node.js'] },
-        { criterion: 'requiredCerts', passed: true, message: 'No required certifications', value: [], required: [] },
+        { criterion: 'requiredSkills', passed: false, message: 'Missing SQL', value: ['Python', 'React'], required: ['SQL', 'Python'] },
       ],
       computedAt: '2026-08-16T10:00:00Z',
     },
@@ -194,21 +195,19 @@ export let mockApplications: Application[] = [
   {
     id: 'app-2',
     studentId: 'student-1',
-    studentName: 'Rahul Sharma',
+    studentName: 'Arjun Mehta',
     internshipId: 'internship-3',
-    internshipTitle: 'Software Engineer at Google',
+    internshipTitle: 'Data Analyst — Apex Cloud',
     currentStatus: ApplicationStatus.REJECTED,
     timeline: [
       { fromStatus: null, toStatus: ApplicationStatus.APPLIED, actorId: 'user-student-1', actorRole: Role.STUDENT, at: '2026-08-02T10:00:00Z' },
       { fromStatus: ApplicationStatus.APPLIED, toStatus: ApplicationStatus.SHORTLISTED, actorId: 'company-3', actorRole: Role.COMPANY, at: '2026-08-03T11:00:00Z' },
-      { fromStatus: ApplicationStatus.SHORTLISTED, toStatus: ApplicationStatus.REJECTED, actorId: 'company-3', actorRole: Role.COMPANY, at: '2026-08-04T12:00:00Z' }
+      { fromStatus: ApplicationStatus.SHORTLISTED, toStatus: ApplicationStatus.REJECTED, actorId: 'company-3', actorRole: Role.COMPANY, at: '2026-08-04T12:00:00Z', reason: 'SQL' }
     ],
     eligibilitySnapshot: {
-      eligible: false,
+      eligible: true,
       checks: [
-        { criterion: 'minCgpa', passed: false, message: 'CGPA is 8.7 (required >= 9.0)', value: 8.7, required: 9.0 },
-        { criterion: 'maxBacklogs', passed: true, message: 'Backlogs count is 0 (required <= 0)', value: 0, required: 0 },
-        { criterion: 'department', passed: true, message: 'Department is Computer Science', value: 'Computer Science', required: 'Computer Science' },
+        { criterion: 'minCgpa', passed: true, message: 'CGPA is 7.9 (required >= 7.0)', value: 7.9, required: 7.0 },
       ],
       computedAt: '2026-08-02T10:00:00Z',
     },
@@ -220,7 +219,7 @@ export let mockApplications: Application[] = [
     studentId: 'student-2',
     studentName: 'Amit Patel',
     internshipId: 'internship-1',
-    internshipTitle: 'Frontend Developer at TCS',
+    internshipTitle: 'Backend Intern — Northbridge Systems',
     currentStatus: ApplicationStatus.COMPLETED,
     timeline: [
       { fromStatus: null, toStatus: ApplicationStatus.APPLIED, actorId: 'user-student-2', actorRole: Role.STUDENT, at: '2026-08-10T10:00:00Z' },
@@ -228,7 +227,7 @@ export let mockApplications: Application[] = [
       { fromStatus: ApplicationStatus.SHORTLISTED, toStatus: ApplicationStatus.OFFERED, actorId: 'company-1', actorRole: Role.COMPANY, at: '2026-08-12T10:00:00Z' },
       { fromStatus: ApplicationStatus.OFFERED, toStatus: ApplicationStatus.ACCEPTED, actorId: 'user-student-2', actorRole: Role.STUDENT, at: '2026-08-13T10:00:00Z' },
       { fromStatus: ApplicationStatus.ACCEPTED, toStatus: ApplicationStatus.TNP_VERIFIED, actorId: 'user-tnp-1', actorRole: Role.TNP, at: '2026-08-14T10:00:00Z' },
-      { fromStatus: ApplicationStatus.TNP_VERIFIED, toStatus: ApplicationStatus.MENTOR_PENDING, actorId: 'user-tnp-1', actorRole: Role.TNP, at: '2026-08-14T12:00:00Z' },
+      { fromStatus: ApplicationStatus.ACCEPTED, toStatus: ApplicationStatus.MENTOR_PENDING, actorId: 'user-tnp-1', actorRole: Role.TNP, at: '2026-08-14T12:00:00Z' },
       { fromStatus: ApplicationStatus.MENTOR_PENDING, toStatus: ApplicationStatus.MENTOR_ASSIGNED, actorId: 'user-faculty-1', actorRole: Role.FACULTY, at: '2026-08-15T10:00:00Z' },
       { fromStatus: ApplicationStatus.MENTOR_ASSIGNED, toStatus: ApplicationStatus.IN_PROGRESS, actorId: 'user-student-2', actorRole: Role.STUDENT, at: '2026-08-15T11:00:00Z' },
       { fromStatus: ApplicationStatus.IN_PROGRESS, toStatus: ApplicationStatus.COMPLETED, actorId: 'user-tnp-1', actorRole: Role.TNP, at: '2026-08-19T10:00:00Z' },
@@ -241,6 +240,96 @@ export let mockApplications: Application[] = [
       computedAt: '2026-08-10T10:00:00Z',
     },
     override: null,
+    ppoOffered: true,
+  },
+  {
+    id: 'app-4',
+    studentId: 'student-3',
+    studentName: 'Priya Patel',
+    internshipId: 'internship-1',
+    internshipTitle: 'Backend Intern — Northbridge Systems',
+    currentStatus: ApplicationStatus.APPLIED,
+    timeline: [
+      { fromStatus: null, toStatus: ApplicationStatus.APPLIED, actorId: 'user-student-3', actorRole: Role.STUDENT, at: '2026-08-20T10:00:00Z' }
+    ],
+    eligibilitySnapshot: {
+      eligible: true,
+      checks: [
+        { criterion: 'minCgpa', passed: true, message: 'CGPA is 8.2 (required >= 7.5)', value: 8.2, required: 7.5 },
+        { criterion: 'maxBacklogs', passed: true, message: 'Backlogs count is 0 (required <= 0)', value: 0, required: 0 },
+        { criterion: 'department', passed: true, message: 'Department is Computer Science', value: 'Computer Science', required: 'Computer Science' },
+      ],
+      computedAt: '2026-08-20T10:00:00Z',
+    },
+    override: null,
+    ppoOffered: false,
+  },
+  {
+    id: 'app-5',
+    studentId: 'student-1',
+    studentName: 'Arjun Mehta',
+    internshipId: 'internship-1',
+    internshipTitle: 'Backend Intern — Northbridge Systems',
+    currentStatus: ApplicationStatus.IN_PROGRESS,
+    timeline: [
+      { fromStatus: null, toStatus: ApplicationStatus.APPLIED, actorId: 'user-student-1', actorRole: Role.STUDENT, at: '2026-08-01T10:00:00Z' },
+      { fromStatus: ApplicationStatus.APPLIED, toStatus: ApplicationStatus.SHORTLISTED, actorId: 'company-1', actorRole: Role.COMPANY, at: '2026-08-02T10:00:00Z' },
+      { fromStatus: ApplicationStatus.SHORTLISTED, toStatus: ApplicationStatus.OFFERED, actorId: 'company-1', actorRole: Role.COMPANY, at: '2026-08-03T10:00:00Z' },
+      { fromStatus: ApplicationStatus.OFFERED, toStatus: ApplicationStatus.ACCEPTED, actorId: 'user-student-1', actorRole: Role.STUDENT, at: '2026-08-04T10:00:00Z' },
+      { fromStatus: ApplicationStatus.ACCEPTED, toStatus: ApplicationStatus.TNP_VERIFIED, actorId: 'user-tnp-1', actorRole: Role.TNP, at: '2026-08-05T10:00:00Z' },
+      { fromStatus: ApplicationStatus.TNP_VERIFIED, toStatus: ApplicationStatus.MENTOR_ASSIGNED, actorId: 'user-faculty-1', actorRole: Role.FACULTY, at: '2026-08-06T10:00:00Z' },
+      { fromStatus: ApplicationStatus.MENTOR_ASSIGNED, toStatus: ApplicationStatus.IN_PROGRESS, actorId: 'user-student-1', actorRole: Role.STUDENT, at: '2026-08-07T10:00:00Z' }
+    ],
+    eligibilitySnapshot: {
+      eligible: true,
+      checks: [],
+      computedAt: '2026-08-01T10:00:00Z',
+    },
+    override: null,
+    ppoOffered: false,
+  },
+  {
+    id: 'app-6',
+    studentId: 'student-4',
+    studentName: 'Priya Sharma',
+    internshipId: 'internship-2',
+    internshipTitle: 'Frontend Intern — Cascade Analytics',
+    currentStatus: ApplicationStatus.IN_PROGRESS,
+    timeline: [
+      { fromStatus: null, toStatus: ApplicationStatus.APPLIED, actorId: 'user-student-4', actorRole: Role.STUDENT, at: '2026-08-01T10:00:00Z' },
+      { fromStatus: ApplicationStatus.APPLIED, toStatus: ApplicationStatus.SHORTLISTED, actorId: 'company-2', actorRole: Role.COMPANY, at: '2026-08-02T10:00:00Z' },
+      { fromStatus: ApplicationStatus.SHORTLISTED, toStatus: ApplicationStatus.OFFERED, actorId: 'company-2', actorRole: Role.COMPANY, at: '2026-08-03T10:00:00Z' },
+      { fromStatus: ApplicationStatus.OFFERED, toStatus: ApplicationStatus.ACCEPTED, actorId: 'user-student-4', actorRole: Role.STUDENT, at: '2026-08-04T10:00:00Z' },
+      { fromStatus: ApplicationStatus.ACCEPTED, toStatus: ApplicationStatus.TNP_VERIFIED, actorId: 'user-tnp-1', actorRole: Role.TNP, at: '2026-08-05T10:00:00Z' },
+      { fromStatus: ApplicationStatus.TNP_VERIFIED, toStatus: ApplicationStatus.MENTOR_ASSIGNED, actorId: 'user-faculty-1', actorRole: Role.FACULTY, at: '2026-08-06T10:00:00Z' },
+      { fromStatus: ApplicationStatus.MENTOR_ASSIGNED, toStatus: ApplicationStatus.IN_PROGRESS, actorId: 'user-student-4', actorRole: Role.STUDENT, at: '2026-08-07T10:00:00Z' }
+    ],
+    eligibilitySnapshot: {
+      eligible: true,
+      checks: [],
+      computedAt: '2026-08-01T10:00:00Z',
+    },
+    override: null,
+    ppoOffered: false,
+  },
+  {
+    id: 'app-7',
+    studentId: 'student-5',
+    studentName: 'Kabir Khan',
+    internshipId: 'internship-1',
+    internshipTitle: 'Backend Intern — Northbridge Systems',
+    currentStatus: ApplicationStatus.APPLIED,
+    timeline: [
+      { fromStatus: null, toStatus: ApplicationStatus.APPLIED, actorId: 'user-student-5', actorRole: Role.STUDENT, at: '2026-08-20T10:00:00Z' }
+    ],
+    eligibilitySnapshot: {
+      eligible: true,
+      checks: [
+        { criterion: 'minCgpa', passed: true, message: 'CGPA is 8.5 (required >= 7.5)', value: 8.5, required: 7.5 },
+      ],
+      computedAt: '2026-08-20T10:00:00Z',
+    },
+    override: null,
     ppoOffered: false,
   }
 ];
@@ -251,29 +340,228 @@ export let mockAssignments: MentorAssignment[] = [
     applicationId: 'app-3',
     facultyId: 'user-faculty-1',
     status: AssignmentStatus.ACCEPTED,
+  },
+  {
+    id: 'assign-2',
+    applicationId: 'app-5',
+    facultyId: 'user-faculty-1',
+    status: AssignmentStatus.ACCEPTED,
+  },
+  {
+    id: 'assign-3',
+    applicationId: 'app-6',
+    facultyId: 'user-faculty-1',
+    status: AssignmentStatus.ACCEPTED,
+  },
+  {
+    id: 'assign-priya-rej',
+    applicationId: 'app-6',
+    facultyId: 'user-faculty-1',
+    status: AssignmentStatus.REJECTED,
   }
 ];
 
 export let mockProgressLogs: ProgressLog[] = [
   {
-    id: 'log-1',
-    applicationId: 'app-3',
+    id: 'log-arjun-1',
+    applicationId: 'app-5',
     weekLabel: 'Week 1',
-    description: 'Scaffolded the frontend project and set up types.',
-    evidence: { type: 'link', value: 'https://github.com/nihar-ux18/Kaushal' },
+    description: 'Completed backend route setups and verified with team lead.',
+    evidence: { type: 'link', value: 'https://github.com/arjun/backend' },
     verified: true,
     verifiedBy: 'user-faculty-1',
-    verifiedAt: '2026-08-18T10:00:00Z',
-    createdAt: '2026-08-17T09:00:00Z',
+    verifiedAt: new Date(Date.now() - 14 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 14 * 86400000).toISOString(),
+  },
+  {
+    id: 'log-priya-1',
+    applicationId: 'app-6',
+    weekLabel: 'Week 1',
+    description: 'Created baseline landing layout and resolved CSS bugs.',
+    evidence: { type: 'link', value: 'https://github.com/priya/frontend' },
+    verified: true,
+    verifiedBy: 'user-faculty-1',
+    verifiedAt: new Date(Date.now() - 21 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 21 * 86400000).toISOString(),
+  },
+  {
+    id: 'log-priya-2',
+    applicationId: 'app-6',
+    weekLabel: 'Week 2',
+    description: 'Integrated query invalidation patterns and cache loaders.',
+    evidence: { type: 'link', value: 'https://github.com/priya/frontend' },
+    verified: true,
+    verifiedBy: 'user-faculty-1',
+    verifiedAt: new Date(Date.now() - 14 * 86400000).toISOString(),
+    createdAt: new Date(Date.now() - 14 * 86400000).toISOString(),
+  },
+  {
+    id: 'log-priya-3',
+    applicationId: 'app-6',
+    weekLabel: 'Week 3',
+    description: 'Scaffolded dialog overlays and form schema controllers.',
+    evidence: { type: 'link', value: 'https://github.com/priya/frontend' },
+    verified: false,
+    createdAt: new Date(Date.now() - 3 * 86400000).toISOString(),
   }
 ];
 
 export let mockDismissals: Dismissal[] = [];
 
+// Programmatically seed bulk isolated filler applications to match the mathematical targets
+// SQL: 12 rejections (1 static + 11 seeded), Docker: 8 rejections, React: 6 rejections, ML: 5 rejections, MongoDB: 4 rejections
+const skillGapSeeds = [
+  { skill: 'SQL', count: 11 },
+  { skill: 'Docker', count: 8 },
+  { skill: 'React', count: 6 },
+  { skill: 'Machine Learning', count: 5 },
+  { skill: 'MongoDB', count: 4 }
+];
+
+skillGapSeeds.forEach(({ skill, count }) => {
+  for (let i = 0; i < count; i++) {
+    mockApplications.push({
+      id: `app-rej-${skill.toLowerCase().replace(/ /g, '-')}-${i}`,
+      studentId: `student-filler-${skill.toLowerCase().replace(/ /g, '-')}-${i}`,
+      studentName: `Filler Student ${skill} ${i}`,
+      internshipId: 'internship-filler-dummy',
+      internshipTitle: 'Dummy Internship',
+      currentStatus: ApplicationStatus.REJECTED,
+      timeline: [
+        { fromStatus: null, toStatus: ApplicationStatus.APPLIED, actorId: 'student-dummy', actorRole: Role.STUDENT, at: '2026-08-01T10:00:00Z' },
+        { fromStatus: ApplicationStatus.APPLIED, toStatus: ApplicationStatus.REJECTED, actorId: 'company-dummy', actorRole: Role.COMPANY, at: '2026-08-02T10:00:00Z', reason: `${skill} gap` }
+      ],
+      eligibilitySnapshot: { eligible: false, checks: [], computedAt: '2026-08-01T10:00:00Z' },
+      override: null,
+      ppoOffered: false,
+    });
+  }
+});
+
+// Seed COMPLETED filler records: 8 records, exactly 3 with ppoOffered = true
+for (let i = 0; i < 8; i++) {
+  mockApplications.push({
+    id: `app-filler-completed-${i}`,
+    studentId: `student-filler-comp-${i}`,
+    studentName: `Completed Student ${i}`,
+    internshipId: 'internship-filler-dummy',
+    internshipTitle: 'Dummy Completed Internship',
+    currentStatus: ApplicationStatus.COMPLETED,
+    timeline: [],
+    eligibilitySnapshot: { eligible: true, checks: [], computedAt: '2026-08-01T10:00:00Z' },
+    override: null,
+    ppoOffered: i < 3, // exactly 3 of the 8 filler completed records have PPO flag
+  });
+}
+
+// Seed IN_PROGRESS filler records: 21 records (plus app-5 & app-6 = 23 total)
+for (let i = 0; i < 21; i++) {
+  mockApplications.push({
+    id: `app-filler-inprogress-${i}`,
+    studentId: `student-filler-prog-${i}`,
+    studentName: `In-Progress Student ${i}`,
+    internshipId: 'internship-filler-dummy',
+    internshipTitle: 'Dummy Active Internship',
+    currentStatus: ApplicationStatus.IN_PROGRESS,
+    timeline: [],
+    eligibilitySnapshot: { eligible: true, checks: [], computedAt: '2026-08-01T10:00:00Z' },
+    override: null,
+    ppoOffered: false,
+  });
+}
+
+// Seed OFFERED filler records: 18 records
+for (let i = 0; i < 18; i++) {
+  mockApplications.push({
+    id: `app-filler-offered-${i}`,
+    studentId: `student-filler-offered-${i}`,
+    studentName: `Offered Student ${i}`,
+    internshipId: 'internship-filler-dummy',
+    internshipTitle: 'Dummy Offered Internship',
+    currentStatus: ApplicationStatus.OFFERED,
+    timeline: [],
+    eligibilitySnapshot: { eligible: true, checks: [], computedAt: '2026-08-01T10:00:00Z' },
+    override: null,
+    ppoOffered: false,
+  });
+}
+
+// Seed SHORTLISTED filler records: 13 records
+for (let i = 0; i < 13; i++) {
+  mockApplications.push({
+    id: `app-filler-shortlisted-${i}`,
+    studentId: `student-filler-shortlisted-${i}`,
+    studentName: `Shortlisted Student ${i}`,
+    internshipId: 'internship-filler-dummy',
+    internshipTitle: 'Dummy Shortlisted Internship',
+    currentStatus: ApplicationStatus.SHORTLISTED,
+    timeline: [],
+    eligibilitySnapshot: { eligible: true, checks: [], computedAt: '2026-08-01T10:00:00Z' },
+    override: null,
+    ppoOffered: false,
+  });
+}
+
+// Seed APPLIED filler records: 13 records (plus app-1, app-4, app-7 = 16 total)
+for (let i = 0; i < 13; i++) {
+  mockApplications.push({
+    id: `app-filler-applied-${i}`,
+    studentId: `student-filler-applied-${i}`,
+    studentName: `Applied Student ${i}`,
+    internshipId: 'internship-filler-dummy',
+    internshipTitle: 'Dummy Applied Internship',
+    currentStatus: ApplicationStatus.APPLIED,
+    timeline: [],
+    eligibilitySnapshot: { eligible: true, checks: [], computedAt: '2026-08-01T10:00:00Z' },
+    override: null,
+    ppoOffered: false,
+  });
+}
+
 export let mockTnpUsers: { name: string; email: string; role: 'faculty' | 'hod'; department: string }[] = [
   { name: 'Dr. Vivek Kumar', email: 'vivek@kaushal.edu', role: 'faculty', department: 'Computer Science' },
   { name: 'Dr. Neha Shah', email: 'neha@kaushal.edu', role: 'faculty', department: 'Information Technology' }
 ];
+
+// Keep deep copies of original mock data arrays/objects for resetMockState
+const originalStudentProfile = JSON.parse(JSON.stringify(mockStudentProfile));
+const originalCompanyProfile = JSON.parse(JSON.stringify(mockCompanyProfile));
+const originalCompanies = JSON.parse(JSON.stringify(mockCompanies));
+const originalInternships = JSON.parse(JSON.stringify(mockInternships));
+const originalApplications = JSON.parse(JSON.stringify(mockApplications));
+const originalAssignments = JSON.parse(JSON.stringify(mockAssignments));
+const originalProgressLogs = JSON.parse(JSON.stringify(mockProgressLogs));
+const originalDismissals = JSON.parse(JSON.stringify(mockDismissals));
+const originalTnpUsers = JSON.parse(JSON.stringify(mockTnpUsers));
+
+export function resetMockState() {
+  mockCompanies.length = 0;
+  mockCompanies.push(...JSON.parse(JSON.stringify(originalCompanies)));
+
+  mockInternships.length = 0;
+  mockInternships.push(...JSON.parse(JSON.stringify(originalInternships)));
+
+  mockApplications.length = 0;
+  mockApplications.push(...JSON.parse(JSON.stringify(originalApplications)));
+
+  mockAssignments.length = 0;
+  mockAssignments.push(...JSON.parse(JSON.stringify(originalAssignments)));
+
+  mockProgressLogs.length = 0;
+  mockProgressLogs.push(...JSON.parse(JSON.stringify(originalProgressLogs)));
+
+  mockDismissals.length = 0;
+  mockDismissals.push(...JSON.parse(JSON.stringify(originalDismissals)));
+
+  mockTnpUsers.length = 0;
+  mockTnpUsers.push(...JSON.parse(JSON.stringify(originalTnpUsers)));
+
+  Object.keys(mockStudentProfile).forEach(key => delete (mockStudentProfile as any)[key]);
+  Object.assign(mockStudentProfile, JSON.parse(JSON.stringify(originalStudentProfile)));
+
+  Object.keys(mockCompanyProfile).forEach(key => delete (mockCompanyProfile as any)[key]);
+  Object.assign(mockCompanyProfile, JSON.parse(JSON.stringify(originalCompanyProfile)));
+}
 
 // ==========================================
 // ELIGIBILITY COMPUTATION ENGINE (SHARED)
@@ -702,6 +990,7 @@ function mockPostInternship(body: any) {
     id: `internship-${mockInternships.length + 1}`,
     companyId: mockCompanyProfile.id,
     companyName: mockCompanyProfile.companyName,
+    title: body.title || 'Internship Position',
     criteria: body.criteria,
     status,
     vacancies: body.vacancies,
@@ -876,10 +1165,20 @@ function mockGetAlerts() {
   };
 }
 
+export function isRecruitmentPipelineStatus(status: ApplicationStatus): boolean {
+  return [
+    ApplicationStatus.APPLIED,
+    ApplicationStatus.SHORTLISTED,
+    ApplicationStatus.OFFERED,
+    ApplicationStatus.ACCEPTED,
+    ApplicationStatus.TNP_VERIFIED,
+    ApplicationStatus.MENTOR_PENDING,
+    ApplicationStatus.MENTOR_ASSIGNED,
+  ].includes(status);
+}
+
 function mockGetAnalytics() {
-  const skillsList = ['React', 'Node.js', 'Java', 'SQL', 'Go', 'TypeScript'];
-  const baseDemand: Record<string, number> = { 'React': 10, 'Node.js': 8, 'Java': 5, 'SQL': 4, 'Go': 3, 'TypeScript': 4 };
-  const baseSupply: Record<string, number> = { 'React': 6, 'Node.js': 4, 'Java': 5, 'SQL': 3, 'Go': 2, 'TypeScript': 3 };
+  const skillsList = ['SQL', 'Docker', 'React', 'Machine Learning', 'MongoDB'];
 
   const skillGapReport = skillsList.map(skill => {
     const rejections = mockApplications.filter(a => {
@@ -889,24 +1188,28 @@ function mockGetAnalytics() {
 
     return {
       skill,
-      demand: (baseDemand[skill] || 5) + rejections,
-      supply: Math.max(0, (baseSupply[skill] || 5) - rejections)
+      demand: rejections, // missing count
+      supply: Math.max(0, 15 - rejections),
+      rejections
     };
   });
 
+  // Sort by rejections descending
+  skillGapReport.sort((a, b) => b.rejections - a.rejections);
+
   return {
     funnel: {
-      applied: mockApplications.length,
-      shortlisted: mockApplications.filter(a => a.currentStatus !== ApplicationStatus.APPLIED && a.currentStatus !== ApplicationStatus.REJECTED).length,
-      offered: mockApplications.filter(a => [ApplicationStatus.OFFERED, ApplicationStatus.ACCEPTED, ApplicationStatus.TNP_VERIFIED, ApplicationStatus.MENTOR_PENDING, ApplicationStatus.MENTOR_ASSIGNED, ApplicationStatus.IN_PROGRESS, ApplicationStatus.COMPLETED].includes(a.currentStatus)).length,
+      applied: mockApplications.filter(a => isRecruitmentPipelineStatus(a.currentStatus)).length,
+      shortlisted: mockApplications.filter(a => isRecruitmentPipelineStatus(a.currentStatus) && a.currentStatus !== ApplicationStatus.APPLIED).length,
+      offered: mockApplications.filter(a => isRecruitmentPipelineStatus(a.currentStatus) && a.currentStatus !== ApplicationStatus.APPLIED && a.currentStatus !== ApplicationStatus.SHORTLISTED).length,
       completed: mockApplications.filter(a => a.currentStatus === ApplicationStatus.COMPLETED).length,
     },
     departmentStats: [
-      { department: 'Computer Science', count: mockApplications.filter(a => a.studentName?.includes('Rahul') || a.studentName?.includes('Amit')).length },
+      { department: 'Computer Science', count: mockApplications.filter(a => a.studentName?.includes('Arjun') || a.studentName?.includes('Amit')).length },
       { department: 'Information Technology', count: 0 },
     ],
     companyStats: [
-      { company: 'TCS', count: mockApplications.filter(a => a.internshipTitle?.includes('TCS')).length },
+      { company: 'Northbridge Systems', count: mockApplications.filter(a => a.internshipTitle?.includes('Northbridge')).length },
       { company: 'Google', count: mockApplications.filter(a => a.internshipTitle?.includes('Google')).length },
     ],
     skillGapReport,
@@ -963,25 +1266,26 @@ function mockGetHodDashboard() {
     completedCount: mockApplications.filter(a => a.currentStatus === ApplicationStatus.COMPLETED).length,
     ppoCount: mockApplications.filter(a => a.ppoOffered).length,
     skillGapReport: mockGetAnalytics().skillGapReport,
-    students: mockApplications.map(a => {
-      const activeDismissal = getActiveDismissal(a.id);
-      const risk = activeDismissal ? null : computeLiveRisk(a.id);
-      return {
-        studentId: a.studentId,
-        applicationId: a.id,
-        studentName: a.studentName,
-        internshipTitle: a.internshipTitle,
-        currentStatus: a.currentStatus,
-        risk,
-        dismissal: activeDismissal,
-      };
-    })
+    students: mockApplications
+      .filter(a => a.internshipId !== 'internship-filler-dummy')
+      .map(a => {
+        const activeDismissal = getActiveDismissal(a.id);
+        const risk = activeDismissal ? null : computeLiveRisk(a.id);
+        return {
+          studentId: a.studentId,
+          applicationId: a.id,
+          studentName: a.studentName,
+          internshipTitle: a.internshipTitle,
+          currentStatus: a.currentStatus,
+          risk,
+          dismissal: activeDismissal,
+        };
+      })
   };
 }
 
-// Fix #8: Returns a NOT_FOUND error response if the student is missing
 function mockGetHodStudentById(studentId: string): ApiResponse<any> {
-  const app = mockApplications.find(a => a.studentId === studentId);
+  const app = mockApplications.find(a => a.studentId === studentId && a.internshipId !== 'internship-filler-dummy');
   if (!app) {
     return {
       success: false,
@@ -1021,10 +1325,20 @@ export const apiClient = {
         : request<{ token: string; role: Role; userId: string }>('/auth/login', 'POST', body),
   },
   tnp: {
-    createInvite: (body: { companyName: string; contactEmail: string }) =>
-      USE_MOCKS
-        ? Promise.resolve(mockResponse({ inviteToken: 'mock-invite-token', expiresAt: new Date(Date.now() + 86400000).toISOString() }))
-        : request<any>('/tnp/invites', 'POST', body),
+    createInvite: (body: { companyName: string; contactEmail: string }) => {
+      if (USE_MOCKS) {
+        const newCompany = {
+          id: `company-${Date.now()}`,
+          userId: `user-company-${Date.now()}`,
+          companyName: body.companyName,
+          contactEmail: body.contactEmail,
+          status: 'pending' as const,
+        };
+        mockCompanies.push(newCompany);
+        return Promise.resolve(mockResponse({ inviteToken: 'mock-invite-token', expiresAt: new Date(Date.now() + 86400000).toISOString() }));
+      }
+      return request<any>('/tnp/invites', 'POST', body);
+    },
     createUser: (body: { name: string; email: string; role: 'faculty' | 'hod'; department: string }): Promise<ApiResponse<any>> => {
       if (USE_MOCKS) {
         const lowerEmail = body.email.toLowerCase();
@@ -1126,10 +1440,36 @@ export const apiClient = {
       USE_MOCKS
         ? Promise.resolve(mockApplyToInternship(body.internshipId))
         : request<Application>('/student/applications', 'POST', body),
-    getApplications: (status?: ApplicationStatus) =>
-      USE_MOCKS
-        ? Promise.resolve(mockResponse(mockApplications.filter(a => a.studentId === mockStudentProfile.id && (!status || a.currentStatus === status))))
-        : request<Application[]>(`/student/applications${status ? `?status=${status}` : ''}`, 'GET'),
+    getApplications: (status?: ApplicationStatus) => {
+      if (USE_MOCKS) {
+        const token = getToken();
+        let userRole: string | null = null;
+        let userId: string | null = null;
+        if (token) {
+          try {
+            const parts = token.split('.');
+            if (parts.length >= 2) {
+              const payload = JSON.parse(atob(parts[1]));
+              userRole = payload.role;
+              userId = payload.userId;
+            }
+          } catch (e) {}
+        }
+
+        // Staff roles (TNP, HOD, Faculty) see all applications except dummy filler records
+        if (userRole === 'tnp' || userRole === 'hod' || userRole === 'faculty') {
+          return Promise.resolve(mockResponse(
+            mockApplications.filter(a => a.internshipId !== 'internship-filler-dummy' && (!status || a.currentStatus === status))
+          ));
+        }
+
+        // Student role sees only their own applications
+        return Promise.resolve(mockResponse(
+          mockApplications.filter(a => a.studentId === 'student-1' && (!status || a.currentStatus === status))
+        ));
+      }
+      return request<Application[]>(`/student/applications${status ? `?status=${status}` : ''}`, 'GET');
+    },
     acceptOffer: (applicationId: string) =>
       USE_MOCKS
         ? Promise.resolve(mockAcceptOffer(applicationId))

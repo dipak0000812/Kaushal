@@ -8,6 +8,7 @@ import RoleShell from '@/components/shared/RoleShell';
 import StatCard from '@/components/shared/StatCard';
 import ChartWrapper from '@/components/shared/ChartWrapper';
 import RiskBadge from '@/components/shared/RiskBadge';
+import WhatsNextPanel from '@/components/shared/WhatsNextPanel';
 import Link from 'next/link';
 import { GraduationCap, Award, CheckCircle, Clock, Users, ArrowRight } from 'lucide-react';
 
@@ -51,6 +52,9 @@ export default function HodDashboard() {
             Monitor real-time cohort progression, corporate skill demand gaps, and student risk matrices.
           </p>
         </div>
+
+        {/* WhatsNextPanel action alerts */}
+        <WhatsNextPanel role={Role.HOD} />
 
         {/* Stats Grid */}
         <section className="grid grid-cols-1 md:grid-cols-3 gap-6">

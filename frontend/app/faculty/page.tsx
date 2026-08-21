@@ -7,8 +7,10 @@ import { Role, AssignmentStatus } from '@/lib/types';
 import RoleShell from '@/components/shared/RoleShell';
 import AssignmentQueueCard from '@/components/shared/AssignmentQueueCard';
 import RiskBadge from '@/components/shared/RiskBadge';
+import WhatsNextPanel from '@/components/shared/WhatsNextPanel';
 import Link from 'next/link';
 import { Users, FileWarning, ClipboardList, ChevronRight } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 export default function FacultyDashboard() {
   const queryClient = useQueryClient();
@@ -53,9 +55,9 @@ export default function FacultyDashboard() {
         queryClient.invalidateQueries({ queryKey: ['faculty-students'] });
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         queryClient.invalidateQueries({ queryKey: ['tnp-alerts'] });
-        alert('Assignment accepted successfully.');
+        toast.success('Assignment accepted successfully.');
       } else {
-        alert(`Failed to accept assignment: ${res.error?.message}`);
+        toast.error(`Failed to accept assignment: ${res.error?.message}`);
       }
     }
   });
@@ -69,11 +71,10 @@ export default function FacultyDashboard() {
         queryClient.invalidateQueries({ queryKey: ['faculty-students'] });
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         queryClient.invalidateQueries({ queryKey: ['tnp-alerts'] });
-        // Also invalidate T&P queue keys since this goes back to unassigned list
         queryClient.invalidateQueries({ queryKey: ['tnp-analytics'] });
-        alert('Assignment declined. Student returned to T&P queue.');
+        toast.success('Assignment declined. Student returned to T&P queue.');
       } else {
-        alert(`Failed to decline assignment: ${res.error?.message}`);
+        toast.error(`Failed to decline assignment: ${res.error?.message}`);
       }
     }
   });
@@ -88,6 +89,7 @@ export default function FacultyDashboard() {
 
   return (
     <RoleShell role={Role.FACULTY}>
+      <Toaster position="top-center" />
       <div className="space-y-8">
         
         {/* Header */}
@@ -100,6 +102,9 @@ export default function FacultyDashboard() {
             Accept pending student assignments, verify weekly logs, and manage cohort progress flags.
           </p>
         </div>
+
+        {/* Action Alert Panel */}
+        <WhatsNextPanel role={Role.FACULTY} />
 
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[200px]">

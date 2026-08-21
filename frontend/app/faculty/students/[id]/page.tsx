@@ -9,6 +9,7 @@ import EvidenceCard from '@/components/shared/EvidenceCard';
 import RiskBadge from '@/components/shared/RiskBadge';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle, Info, ShieldAlert, AlertTriangle, X } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -37,9 +38,9 @@ export default function StudentDetailPage({ params }: Props) {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['faculty-students'] });
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
-        alert('Weekly progress log verified successfully.');
+        toast.success('Weekly progress log verified successfully.');
       } else {
-        alert(`Failed to verify log: ${res.error?.message}`);
+        toast.error(`Failed to verify log: ${res.error?.message}`);
       }
     }
   });
@@ -54,9 +55,9 @@ export default function StudentDetailPage({ params }: Props) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         setDismissOpen(false);
         setDismissNote('');
-        alert('Risk flag dismissed successfully.');
+        toast.success('Risk flag dismissed successfully.');
       } else {
-        alert(`Failed to dismiss risk flag: ${res.error?.message}`);
+        toast.error(`Failed to dismiss risk flag: ${res.error?.message}`);
       }
     }
   });
@@ -103,6 +104,7 @@ export default function StudentDetailPage({ params }: Props) {
 
   return (
     <RoleShell role={Role.FACULTY}>
+      <Toaster position="top-center" />
       <div className="space-y-6">
         
         {/* Back Link */}

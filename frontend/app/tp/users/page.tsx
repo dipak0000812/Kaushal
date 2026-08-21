@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   Plus
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const userFormSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters.' }),
@@ -61,9 +62,9 @@ export default function TnpUsersPage() {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['tnp-users'] });
         reset();
-        alert('Academic account created successfully!');
+        toast.success('Academic account created successfully!');
       } else {
-        alert(`Failed to create account: ${res.error?.message || 'Conflict / Duplicate Email'}`);
+        toast.error(`Failed to create account: ${res.error?.message || 'Conflict / Duplicate Email'}`);
       }
     },
   });

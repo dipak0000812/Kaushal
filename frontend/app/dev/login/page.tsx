@@ -8,7 +8,8 @@
 'use client';
 
 import React from 'react';
-import { ShieldCheck, User, Users, GraduationCap, Building2, UserCog } from 'lucide-react';
+import { ShieldCheck, User, Users, GraduationCap, Building2, UserCog, RotateCcw } from 'lucide-react';
+import { resetMockState } from '@/lib/api/client';
 
 const ROLES = [
   {
@@ -136,6 +137,20 @@ export default function DevLoginPage() {
               </button>
             );
           })}
+        </div>
+
+        {/* Reset Mock Database */}
+        <div className="border-t border-[#E2E8F0] pt-4 mt-2">
+          <button
+            onClick={() => {
+              resetMockState();
+              alert('Mock database arrays and profiles have been reset to their initial seed state!');
+            }}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 bg-[#F1F5F9] hover:bg-[#E2E8F0] text-[#475569] hover:text-[#0F172A] rounded-lg text-xs font-bold transition-all border border-[#E2E8F0] cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            Reset Demo Data
+          </button>
         </div>
 
       </div>

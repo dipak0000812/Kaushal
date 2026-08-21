@@ -4,6 +4,9 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Role } from '@/lib/types';
+import { resetMockState } from '@/lib/api/client';
+import { useQueryClient } from '@tanstack/react-query';
+import toast, { Toaster } from 'react-hot-toast';
 import { 
   LayoutDashboard, 
   Briefcase, 
@@ -18,7 +21,8 @@ import {
   ShieldCheck,
   Building2,
   Bell,
-  ChevronDown
+  ChevronDown,
+  RefreshCw
 } from 'lucide-react';
 
 const getRoleDisplayName = (role: Role) => {
@@ -55,9 +59,25 @@ interface NavItem {
 export default function RoleShell({ role, children }: RoleShellProps) {
   const pathname = usePathname();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const [userName, setUserName] = React.useState('');
   const [userInitials, setUserInitials] = React.useState('');
+  const [dropdownOpen, setDropdownOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!dropdownOpen) return;
+    const handleOutsideClick = () => setDropdownOpen(false);
+    document.addEventListener('click', handleOutsideClick);
+    return () => document.removeEventListener('click', handleOutsideClick);
+  }, [dropdownOpen]);
+
+  const handleResetDemo = () => {
+    resetMockState();
+    queryClient.clear();
+    toast.success('Demo state statefully reset to initial database snapshot!');
+    router.refresh();
+  };
 
   React.useEffect(() => {
     const getCookie = (name: string) => {
@@ -145,7 +165,6 @@ export default function RoleShell({ role, children }: RoleShellProps) {
           </div>
           <div>
             <h1 className="font-semibold text-base leading-tight">Kaushal</h1>
-            <span className="text-xs text-[#EA580C] font-semibold tracking-wider uppercase">Verified Portal</span>
           </div>
         </div>
 
@@ -173,69 +192,107 @@ export default function RoleShell({ role, children }: RoleShellProps) {
         </nav>
 
         {/* User profile footer */}
-        <div className="p-4 border-t border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-2">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-bold text-xs shadow-inner">
-              {currentUserInitials}
+        {role !== Role.TNP && (
+          <div className="p-4 border-t border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-bold text-xs shadow-inner">
+                {currentUserInitials}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-semibold text-[#475569] truncate">
+                  {currentUserName}
+                </p>
+                <p className="text-[11px] text-[#94A3B8] truncate leading-tight">
+                  {role}@ghr.edu
+                </p>
+              </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-[#475569] truncate">
-                {currentUserName}
-              </p>
-              <p className="text-[11px] text-[#94A3B8] truncate leading-tight">
-                {role}@ghr.edu
-              </p>
-            </div>
+            <button
+              onClick={handleLogout}
+              className="w-full flex items-center justify-center gap-2 mt-2 px-3 py-2 border border-[#E2E8F0] bg-white rounded-md text-xs font-semibold text-[#B91C1C] hover:bg-[#FEE2E2] hover:border-[#FCA5A5] transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              Logout
+            </button>
+            <Link
+              href="/dev/login"
+              className="w-full flex items-center justify-center gap-2 mt-1.5 px-3 py-2 border border-[#E2E8F0] bg-white rounded-md text-xs font-semibold text-[#5B21B6] hover:bg-[#EDE9FE] hover:border-[#DDD6FE] transition-colors"
+            >
+              <ShieldCheck className="w-3.5 h-3.5" />
+              Switch Role (Dev)
+            </Link>
           </div>
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 mt-2 px-3 py-2 border border-[#E2E8F0] bg-white rounded-md text-xs font-semibold text-[#B91C1C] hover:bg-[#FEE2E2] hover:border-[#FCA5A5] transition-colors"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Logout
-          </button>
-          <Link
-            href="/dev/login"
-            className="w-full flex items-center justify-center gap-2 mt-1.5 px-3 py-2 border border-[#E2E8F0] bg-white rounded-md text-xs font-semibold text-[#5B21B6] hover:bg-[#EDE9FE] hover:border-[#DDD6FE] transition-colors"
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Switch Role (Dev)
-          </Link>
-        </div>
+        )}
       </aside>
 
       {/* Main Canvas Area */}
       <div className="pl-[240px] flex-1 flex flex-col min-h-screen">
         {/* Topbar */}
         <header className="h-16 bg-white border-b border-[#E2E8F0] px-8 flex items-center justify-between sticky top-0 z-10">
-          <div className="flex items-center gap-3">
-            <span className="text-sm font-semibold text-[#475569]">Workspace</span>
-            <span className="text-xs text-[#94A3B8]">/</span>
-            <span className="text-sm font-semibold text-[#0F172A] capitalize">{role} Portal</span>
+          <div className="flex flex-col justify-center">
+            <span className="text-[11px] text-[#64748B] font-medium leading-none mb-1 font-sans">GH Raisoni College</span>
+            <span className="text-sm font-bold text-[#0F172A] leading-none font-sans">
+              {role === Role.STUDENT ? 'Student Workspace' : 
+               role === Role.TNP ? 'T&P Portal' : 
+               role === Role.FACULTY ? 'Faculty Workspace' : 
+               role === Role.COMPANY ? 'Recruiter Portal' : 
+               role === Role.HOD ? 'HOD Portal' : `${getRoleDisplayName(role)} Workspace`}
+            </span>
           </div>
           <div className="flex items-center gap-4">
-            {role === Role.TNP && (
+            {/* {role === Role.TNP && (
               <span className="bg-[#FEF3C7] text-[#D97706] text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wide">
                 Admin Mode
               </span>
-            )}
-            <span className="text-xs font-medium text-[#64748B]">GHR COE Nagpur</span>
-            <div className="w-px h-6 bg-[#E2E8F0]"></div>
+            )} */}
             
-            {/* Grouped control container on the right edge */}
             <div className="flex items-center gap-3">
               <button className="text-[#64748B] hover:text-[#0F172A] relative transition-colors cursor-pointer p-1">
                 <Bell className="w-4 h-4" />
-                <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-[#EA580C] rounded-full"></span>
               </button>
-              <div className="flex items-center gap-2 cursor-pointer select-none group">
-                <div className="w-8 h-8 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-bold text-xs shadow-inner">
-                  {currentUserInitials}
-                </div>
-                <span className="text-xs font-semibold text-[#334155] group-hover:text-[#0F172A] transition-colors max-w-[120px] truncate font-sans">
-                  {currentUserName}
-                </span>
-                <ChevronDown className="w-3.5 h-3.5 text-[#64748B] group-hover:text-[#0F172A] transition-colors" />
+              
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDropdownOpen(!dropdownOpen);
+                  }}
+                  className="flex items-center gap-2 cursor-pointer select-none border border-[#E2E8F0] p-1 pr-3 rounded-lg bg-white hover:bg-[#F8FAFC] transition-colors text-left"
+                >
+                  <div className="w-7 h-7 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-bold text-xs shadow-inner shrink-0">
+                    {currentUserInitials}
+                  </div>
+                  <span className="text-xs font-semibold text-[#334155] group-hover:text-[#0F172A] transition-colors max-w-[120px] truncate font-sans">
+                    {currentUserName}
+                  </span>
+                  <ChevronDown className="w-3.5 h-3.5 text-[#64748B] group-hover:text-[#0F172A] transition-colors shrink-0" />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {dropdownOpen && (
+                  <div className="absolute right-0 top-full mt-1.5 w-48 bg-white border border-[#E2E8F0] rounded-xl shadow-lg py-1 z-30 overflow-hidden font-sans">
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        toast.success('Profile editing is locked for the demo.');
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-[#334155] hover:bg-[#F8FAFC] transition-colors text-left border-b border-[#E2E8F0] cursor-pointer animate-in fade-in slide-in-from-top-1 duration-100"
+                    >
+                      <UserIcon className="w-4 h-4 text-[#64748B]" />
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-[#B91C1C] hover:bg-[#FFF5F5] transition-colors text-left cursor-pointer animate-in fade-in slide-in-from-top-1 duration-100"
+                    >
+                      <LogOut className="w-4 h-4 text-[#B91C1C]" />
+                      Log Out
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -248,6 +305,20 @@ export default function RoleShell({ role, children }: RoleShellProps) {
           </div>
         </main>
       </div>
+
+      {/* Floating Demo Reset Button */}
+      <div className="fixed bottom-6 right-6 z-50">
+        <button
+          onClick={handleResetDemo}
+          title="Reset Mock State to Initial Seeds"
+          className="flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-slate-800 text-slate-100 text-xs font-bold rounded-full shadow-2xl border border-slate-700 cursor-pointer transition-all hover:scale-105 active:scale-95 group"
+        >
+          <RefreshCw className="w-3.5 h-3.5 group-hover:rotate-180 transition-transform duration-500 text-violet-400" />
+          <span>Reset Demo State</span>
+        </button>
+      </div>
+
+      <Toaster position="top-center" reverseOrder={false} />
     </div>
   );
 }

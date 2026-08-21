@@ -6,6 +6,8 @@ import { apiClient } from '@/lib/api/client';
 import { Role, ApplicationStatus } from '@/lib/types';
 import RoleShell from '@/components/shared/RoleShell';
 import Link from 'next/link';
+import WhatsNextPanel from '@/components/shared/WhatsNextPanel';
+import toast, { Toaster } from 'react-hot-toast';
 import { Building2, Plus, ArrowUpRight, CheckCircle, Clock, AlertCircle, XCircle } from 'lucide-react';
 
 export default function CompanyDashboard() {
@@ -59,9 +61,9 @@ export default function CompanyDashboard() {
     onSuccess: (res) => {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['company-internships'] });
-        alert('Internship posting closed successfully.');
+        toast.success('Internship posting closed successfully.');
       } else {
-        alert(`Failed to close posting: ${res.error?.message}`);
+        toast.error(`Failed to close posting: ${res.error?.message}`);
       }
     }
   });
@@ -99,6 +101,7 @@ export default function CompanyDashboard() {
 
   return (
     <RoleShell role={Role.COMPANY}>
+      <Toaster position="top-center" />
       <div className="space-y-8">
         
         {/* Header */}
@@ -121,6 +124,9 @@ export default function CompanyDashboard() {
             Create Posting
           </Link>
         </div>
+
+        {/* WhatsNextPanel action indicator */}
+        <WhatsNextPanel role={Role.COMPANY} />
 
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[300px]">

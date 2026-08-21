@@ -18,6 +18,7 @@ import {
   Copy,
   Plus
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const inviteSchema = z.object({
   companyName: z.string().min(2, { message: 'Company name must be at least 2 characters.' }),
@@ -63,7 +64,7 @@ export default function TnpCompaniesPage() {
         });
         reset();
       } else {
-        alert(`Failed to create invite: ${res.error?.message}`);
+        toast.error(`Failed to create invite: ${res.error?.message}`);
       }
     },
   });
@@ -76,9 +77,9 @@ export default function TnpCompaniesPage() {
         queryClient.invalidateQueries({ queryKey: ['tnp-companies'] });
         queryClient.invalidateQueries({ queryKey: ['pending-internships'] });
         queryClient.invalidateQueries({ queryKey: ['tnp-alerts'] });
-        alert('Company verified successfully! All pending postings for this company are auto-published.');
+        toast.success('Company verified successfully! All pending postings for this company are auto-published.');
       } else {
-        alert(`Failed to verify company: ${res.error?.message}`);
+        toast.error(`Failed to verify company: ${res.error?.message}`);
       }
     },
   });
@@ -90,7 +91,7 @@ export default function TnpCompaniesPage() {
   const handleCopyToken = () => {
     if (!inviteResult) return;
     navigator.clipboard.writeText(inviteResult.token);
-    alert('Invite token copied to clipboard!');
+    toast.success('Invite token copied to clipboard!');
   };
 
   return (

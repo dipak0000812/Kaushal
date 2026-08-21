@@ -8,6 +8,7 @@ import RoleShell from '@/components/shared/RoleShell';
 import StatusStepper from '@/components/shared/StatusStepper';
 import Link from 'next/link';
 import { ArrowLeft, Trash2, ShieldAlert, X } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -37,9 +38,9 @@ export default function TnpApplicationDetailPage({ params }: Props) {
         queryClient.invalidateQueries({ queryKey: ['tnp-alerts'] });
         setCancelOpen(false);
         setCancelReason('');
-        alert('Application cancelled successfully.');
+        toast.success('Application cancelled successfully.');
       } else {
-        alert(`Failed to cancel application: ${res.error?.message}`);
+        toast.error(`Failed to cancel application: ${res.error?.message}`);
       }
     }
   });

@@ -211,6 +211,7 @@ export type InternshipStatus = 'pendingApproval' | 'open' | 'closed' | 'cancelle
 export interface Internship {
   id: string;
   companyId: string;
+  title: string;
   companyName?: string; // Derived/populated field
   criteria: InternshipCriteria;
   status: InternshipStatus;

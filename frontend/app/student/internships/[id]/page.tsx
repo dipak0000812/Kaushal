@@ -8,6 +8,7 @@ import RoleShell from '@/components/shared/RoleShell';
 import EligibilityBreakdown from '@/components/shared/EligibilityBreakdown';
 import Link from 'next/link';
 import { ArrowLeft, Users, Calendar, Award, CheckCircle, ShieldAlert } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -37,9 +38,9 @@ export default function InternshipDetailPage({ params }: Props) {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         queryClient.invalidateQueries({ queryKey: ['internships'] });
-        alert('Application submitted successfully!');
+        toast.success('Application submitted successfully!');
       } else {
-        alert(`Failed to apply: ${res.error?.message || 'Unknown error'}`);
+        toast.error(`Failed to apply: ${res.error?.message || 'Unknown error'}`);
       }
     },
   });

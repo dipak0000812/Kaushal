@@ -8,6 +8,7 @@ import RoleShell from '@/components/shared/RoleShell';
 import StatusStepper from '@/components/shared/StatusStepper';
 import Link from 'next/link';
 import { ArrowLeft, CheckCircle, XCircle, BellRing } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -33,9 +34,9 @@ export default function ApplicationDetailPage({ params }: Props) {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         queryClient.invalidateQueries({ queryKey: ['internships'] });
-        alert('Offer accepted successfully! All other offered applications are auto-withdrawn.');
+        toast.success('Offer accepted successfully! All other offered applications are auto-withdrawn.');
       } else {
-        alert(`Failed to accept offer: ${res.error?.message || 'Unknown error'}`);
+        toast.error(`Failed to accept offer: ${res.error?.message || 'Unknown error'}`);
       }
     },
   });
@@ -46,9 +47,9 @@ export default function ApplicationDetailPage({ params }: Props) {
     onSuccess: (res) => {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
-        alert('Offer declined and application withdrawn.');
+        toast.success('Offer declined and application withdrawn.');
       } else {
-        alert(`Failed to decline offer: ${res.error?.message || 'Unknown error'}`);
+        toast.error(`Failed to decline offer: ${res.error?.message || 'Unknown error'}`);
       }
     },
   });

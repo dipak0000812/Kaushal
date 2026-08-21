@@ -8,6 +8,7 @@ import RoleShell from '@/components/shared/RoleShell';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, UserCheck, UserX, Award, ClipboardCopy, Star, AlertTriangle, ExternalLink } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -47,9 +48,9 @@ export default function ApplicantsPage({ params }: Props) {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['company-applicants', id] });
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
-        alert('Applicant shortlisted successfully.');
+        toast.success('Applicant shortlisted successfully.');
       } else {
-        alert(`Failed to shortlist: ${res.error?.message}`);
+        toast.error(`Failed to shortlist: ${res.error?.message}`);
       }
     }
   });
@@ -63,9 +64,9 @@ export default function ApplicantsPage({ params }: Props) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         // Killer moment: Invalidate analytics query cache key
         queryClient.invalidateQueries({ queryKey: ['tnp-analytics'] });
-        alert('Applicant rejected.');
+        toast.success('Applicant rejected.');
       } else {
-        alert(`Failed to reject: ${res.error?.message}`);
+        toast.error(`Failed to reject: ${res.error?.message}`);
       }
     }
   });
@@ -77,9 +78,9 @@ export default function ApplicantsPage({ params }: Props) {
         queryClient.invalidateQueries({ queryKey: ['company-applicants', id] });
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         queryClient.invalidateQueries({ queryKey: ['tnp-analytics'] });
-        alert('Internship offer sent successfully.');
+        toast.success('Internship offer sent successfully.');
       } else {
-        alert(`Failed to send offer: ${res.error?.message}`);
+        toast.error(`Failed to send offer: ${res.error?.message}`);
       }
     }
   });
@@ -93,9 +94,9 @@ export default function ApplicantsPage({ params }: Props) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         setEvalOpen(false);
         setEvalAppId(null);
-        alert('Evaluation submitted successfully.');
+        toast.success('Evaluation submitted successfully.');
       } else {
-        alert(`Failed to submit evaluation: ${res.error?.message}`);
+        toast.error(`Failed to submit evaluation: ${res.error?.message}`);
       }
     }
   });
@@ -108,7 +109,7 @@ export default function ApplicantsPage({ params }: Props) {
     const reason = prompt('Enter reason for rejection (e.g. Missing React skills):');
     if (reason === null) return;
     if (!reason.trim()) {
-      alert('Rejection reason is required.');
+      toast.error('Rejection reason is required.');
       return;
     }
     rejectMutation.mutate({ appId, reason });
@@ -164,6 +165,7 @@ export default function ApplicantsPage({ params }: Props) {
 
   return (
     <RoleShell role={Role.COMPANY}>
+      <Toaster position="top-center" />
       <div className="space-y-6">
         
         {/* Back navigation */}

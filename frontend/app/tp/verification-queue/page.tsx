@@ -19,6 +19,7 @@ import {
   ChevronRight,
   Settings
 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function VerificationQueuePage() {
   const queryClient = useQueryClient();
@@ -55,9 +56,9 @@ export default function VerificationQueuePage() {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         queryClient.invalidateQueries({ queryKey: ['tnp-alerts'] });
-        alert('Offer verified and moved to TNP_VERIFIED status.');
+        toast.success('Offer verified and moved to TNP_VERIFIED status.');
       } else {
-        alert(`Failed to verify offer: ${res.error?.message}`);
+        toast.error(`Failed to verify offer: ${res.error?.message}`);
       }
     }
   });
@@ -72,9 +73,9 @@ export default function VerificationQueuePage() {
         queryClient.invalidateQueries({ queryKey: ['tnp-analytics'] });
         setRejectAppId(null);
         setRejectReason('');
-        alert('Offer rejected. Application returned to OFFERED status.');
+        toast.success('Offer rejected. Application returned to OFFERED status.');
       } else {
-        alert(`Failed to reject offer: ${res.error?.message}`);
+        toast.error(`Failed to reject offer: ${res.error?.message}`);
       }
     }
   });
@@ -86,9 +87,9 @@ export default function VerificationQueuePage() {
         queryClient.invalidateQueries({ queryKey: ['pending-internships'] });
         queryClient.invalidateQueries({ queryKey: ['internships'] });
         queryClient.invalidateQueries({ queryKey: ['tnp-alerts'] });
-        alert('Corporate internship posting approved and published.');
+        toast.success('Corporate internship posting approved and published.');
       } else {
-        alert(`Failed to approve posting: ${res.error?.message}`);
+        toast.error(`Failed to approve posting: ${res.error?.message}`);
       }
     }
   });
@@ -99,9 +100,9 @@ export default function VerificationQueuePage() {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         queryClient.invalidateQueries({ queryKey: ['tnp-alerts'] });
-        alert('Faculty mentor assigned successfully.');
+        toast.success('Faculty mentor assigned successfully.');
       } else {
-        alert(`Failed to assign mentor: ${res.error?.message}`);
+        toast.error(`Failed to assign mentor: ${res.error?.message}`);
       }
     }
   });
@@ -116,9 +117,9 @@ export default function VerificationQueuePage() {
         queryClient.invalidateQueries({ queryKey: ['internships'] });
         setSelectedAppForOverride(null);
         setOverrideReason('');
-        alert('Eligibility override saved successfully.');
+        toast.success('Eligibility override saved successfully.');
       } else {
-        alert(`Failed to save override: ${res.error?.message}`);
+        toast.error(`Failed to save override: ${res.error?.message}`);
       }
     }
   });

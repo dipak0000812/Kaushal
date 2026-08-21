@@ -9,6 +9,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { CalendarCheck, ShieldAlert, Sparkles, CheckCircle2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const progressFormSchema = z.object({
   description: z.string().min(10, { message: 'Description must be at least 10 characters long.' }),
@@ -50,9 +51,9 @@ export default function StudentProgressPage() {
       if (res.success) {
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         reset();
-        alert('Weekly progress log submitted successfully!');
+        toast.success('Weekly progress log submitted successfully!');
       } else {
-        alert(`Failed to submit: ${res.error?.message || 'Unknown error'}`);
+        toast.error(`Failed to submit: ${res.error?.message || 'Unknown error'}`);
       }
     },
   });

@@ -10,6 +10,7 @@ import { Role } from '@/lib/types';
 import RoleShell from '@/components/shared/RoleShell';
 import { useRouter } from 'next/navigation';
 import { Building2, ArrowLeft, CheckCircle, Clock } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const criteriaSchema = z.object({
   minCgpa: z.number().min(0).max(10, 'CGPA must be between 0 and 10'),
@@ -66,7 +67,7 @@ export default function NewPostPage({ testSuccessInfo }: { testSuccessInfo?: { s
         queryClient.invalidateQueries({ queryKey: ['company-internships'] });
         setSuccessInfo({ status: res.data.status });
       } else {
-        alert(`Failed to post internship: ${res.error?.message}`);
+        toast.error(`Failed to post internship: ${res.error?.message}`);
       }
     },
   });
