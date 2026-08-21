@@ -1361,14 +1361,26 @@ export const apiClient = {
       USE_MOCKS
         ? Promise.resolve(mockVerifyCompany(companyId))
         : request<any>(`/tnp/companies/${companyId}/verify`, 'PATCH'),
-    getCompanies: () =>
-      USE_MOCKS
+    // TODO(backend): GET /tnp/companies is not yet in API_Contract.md.
+    // Backend team must add: GET /api/v1/tnp/companies → returns CompanyProfile[]
+    getCompanies: () => {
+      if (!USE_MOCKS && process.env.NODE_ENV === 'development') {
+        console.warn('[API] GET /tnp/companies is not defined in API_Contract.md — backend endpoint required.');
+      }
+      return USE_MOCKS
         ? Promise.resolve(mockResponse(mockCompanies))
-        : request<CompanyProfile[]>('/tnp/companies', 'GET'),
-    getUsers: () =>
-      USE_MOCKS
+        : request<CompanyProfile[]>('/tnp/companies', 'GET');
+    },
+    // TODO(backend): GET /tnp/users is not yet in API_Contract.md.
+    // Backend team must add: GET /api/v1/tnp/users → returns { name, email, role, department }[]
+    getUsers: () => {
+      if (!USE_MOCKS && process.env.NODE_ENV === 'development') {
+        console.warn('[API] GET /tnp/users is not defined in API_Contract.md — backend endpoint required.');
+      }
+      return USE_MOCKS
         ? Promise.resolve(mockResponse(mockTnpUsers))
-        : request<any[]>('/tnp/users', 'GET'),
+        : request<any[]>('/tnp/users', 'GET');
+    },
     getPendingInternships: () =>
       USE_MOCKS
         ? Promise.resolve(mockResponse(mockInternships.filter(i => i.status === 'pendingApproval')))
@@ -1377,15 +1389,24 @@ export const apiClient = {
       USE_MOCKS
         ? Promise.resolve(mockApproveInternship(id))
         : request<Internship>(`/tnp/internships/${id}/approve`, 'PATCH'),
+    // Gap 3 fix: both verifyOffer and rejectOffer now respect USE_MOCKS so they
+    // correctly call the real backend at PATCH /tnp/applications/:id/verify-offer
+    // and PATCH /tnp/applications/:id/reject-offer when mocks are disabled.
     verifyOffer: (applicationId: string): Promise<ApiResponse<Application>> => {
-      const app = mockApplications.find(a => a.id === applicationId);
-      if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
-      return Promise.resolve(applyTransition(app, ApplicationStatus.TNP_VERIFIED, 'user-tnp-1', Role.TNP));
+      if (USE_MOCKS) {
+        const app = mockApplications.find(a => a.id === applicationId);
+        if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
+        return Promise.resolve(applyTransition(app, ApplicationStatus.TNP_VERIFIED, 'user-tnp-1', Role.TNP));
+      }
+      return request<Application>(`/tnp/applications/${applicationId}/verify-offer`, 'PATCH');
     },
     rejectOffer: (applicationId: string, reason: string): Promise<ApiResponse<Application>> => {
-      const app = mockApplications.find(a => a.id === applicationId);
-      if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
-      return Promise.resolve(applyTransition(app, ApplicationStatus.OFFERED, 'user-tnp-1', Role.TNP, reason));
+      if (USE_MOCKS) {
+        const app = mockApplications.find(a => a.id === applicationId);
+        if (!app) return Promise.resolve({ success: false, error: { code: 'NOT_FOUND', message: 'Application not found' } });
+        return Promise.resolve(applyTransition(app, ApplicationStatus.OFFERED, 'user-tnp-1', Role.TNP, reason));
+      }
+      return request<Application>(`/tnp/applications/${applicationId}/reject-offer`, 'PATCH', { reason });
     },
     overrideEligibility: (applicationId: string, body: { eligible: boolean; reason: string }) =>
       USE_MOCKS

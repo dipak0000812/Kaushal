@@ -191,39 +191,8 @@ export default function RoleShell({ role, children }: RoleShellProps) {
           })}
         </nav>
 
-        {/* User profile footer */}
-        {role !== Role.TNP && (
-          <div className="p-4 border-t border-[#E2E8F0] bg-[#F8FAFC] flex flex-col gap-2">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-[#EDE9FE] text-[#5B21B6] flex items-center justify-center font-bold text-xs shadow-inner">
-                {currentUserInitials}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-semibold text-[#475569] truncate">
-                  {currentUserName}
-                </p>
-                <p className="text-[11px] text-[#94A3B8] truncate leading-tight">
-                  {role}@ghr.edu
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 mt-2 px-3 py-2 border border-[#E2E8F0] bg-white rounded-md text-xs font-semibold text-[#B91C1C] hover:bg-[#FEE2E2] hover:border-[#FCA5A5] transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              Logout
-            </button>
-            <Link
-              href="/dev/login"
-              className="w-full flex items-center justify-center gap-2 mt-1.5 px-3 py-2 border border-[#E2E8F0] bg-white rounded-md text-xs font-semibold text-[#5B21B6] hover:bg-[#EDE9FE] hover:border-[#DDD6FE] transition-colors"
-            >
-              <ShieldCheck className="w-3.5 h-3.5" />
-              Switch Role (Dev)
-            </Link>
-          </div>
-        )}
       </aside>
+
 
       {/* Main Canvas Area */}
       <div className="pl-[240px] flex-1 flex flex-col min-h-screen">
