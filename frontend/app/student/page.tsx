@@ -75,15 +75,36 @@ export default function StudentDashboard() {
   const openInternships = internships.filter(i => i.status === 'open');
 
   const checkEligibility = (internship: any) => {
+    if (internship.eligibility?.checks && internship.eligibility.checks.length > 0) {
+      return {
+        eligible: !!internship.eligibility.eligible,
+        checks: internship.eligibility.checks.map((c: any) => ({
+          criterion: c.criterion,
+          passed: c.pass !== undefined ? c.pass : (c.passed !== undefined ? c.passed : true),
+          message: c.reason || c.message || `${c.criterion}: ${c.pass ? 'Passed' : 'Not met'}`,
+        })),
+      };
+    }
+    if (internship.eligibility?.eligible !== undefined) {
+      return {
+        eligible: !!internship.eligibility.eligible,
+        checks: [],
+      };
+    }
     if (!profile) return { eligible: false, checks: [] };
 
-    const cgpaPassed = profile.cgpa >= internship.criteria.minCgpa;
-    const backlogPassed = profile.backlogs <= internship.criteria.maxBacklogs;
-    const deptPassed = profile.department === internship.criteria.department;
+    const cgpaPassed = (profile.cgpa ?? 0) >= (internship.criteria?.minCgpa ?? 0);
+    const backlogs = profile.activeBacklogs ?? profile.backlogs ?? 0;
+    const backlogPassed = backlogs <= (internship.criteria?.maxBacklogs ?? 0);
+    const depts = Array.isArray(internship.criteria?.departments)
+      ? internship.criteria.departments
+      : internship.criteria?.department ? [internship.criteria.department] : [];
+    const deptPassed = depts.length === 0 || depts.includes(profile.department);
     
-    // Skill matches check
-    const missingSkills = internship.criteria.requiredSkills.filter(
-      (s: string) => !profile.skills.includes(s)
+    const requiredSkills = internship.criteria?.requiredSkills ?? [];
+    const studentSkills = profile.skills ?? [];
+    const missingSkills = requiredSkills.filter(
+      (s: string) => !studentSkills.includes(s)
     );
     const skillsPassed = missingSkills.length === 0;
 
@@ -91,29 +112,23 @@ export default function StudentDashboard() {
       {
         criterion: 'CGPA Requirement',
         passed: cgpaPassed,
-        message: cgpaPassed 
-          ? `CGPA is ${profile.cgpa.toFixed(2)} (required >= ${internship.criteria.minCgpa})`
-          : `CGPA is ${profile.cgpa.toFixed(2)} (requires >= ${internship.criteria.minCgpa})`,
+        message: `CGPA is ${(profile.cgpa ?? 0).toFixed(2)} (required >= ${internship.criteria?.minCgpa ?? 0})`,
       },
       {
         criterion: 'Backlog Check',
         passed: backlogPassed,
-        message: backlogPassed
-          ? `Backlogs count is ${profile.backlogs} (limit <= ${internship.criteria.maxBacklogs})`
-          : `Active backlogs present: ${profile.backlogs} (limit <= ${internship.criteria.maxBacklogs})`,
+        message: `Backlogs count is ${backlogs} (limit <= ${internship.criteria?.maxBacklogs ?? 0})`,
       },
       {
         criterion: 'Department Alignment',
         passed: deptPassed,
-        message: deptPassed
-          ? `Department is ${profile.department}`
-          : `Department is ${profile.department} (requires ${internship.criteria.department})`,
+        message: `Department is ${profile.department}`,
       },
       {
         criterion: 'Skills Criteria',
         passed: skillsPassed,
         message: skillsPassed
-          ? `All skills matched: ${internship.criteria.requiredSkills.join(', ')}`
+          ? `All skills matched: ${requiredSkills.join(', ')}`
           : `Missing skills: ${missingSkills.join(', ')}`,
       }
     ];
@@ -299,7 +314,7 @@ export default function StudentDashboard() {
                   </div>
 
                   <div className="space-y-3">
-                    {checks.map((check, index) => (
+                    {checks.map((check: any, index: number) => (
                       <div 
                         key={index} 
                         className={`flex items-start gap-3 p-3 rounded-lg border ${

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient, mockProgressLogs } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/client';
 import { Role } from '@/lib/types';
 import RoleShell from '@/components/shared/RoleShell';
 import EvidenceCard from '@/components/shared/EvidenceCard';
@@ -17,10 +17,7 @@ export default function StudentDocumentsPage() {
   });
 
   const studentApps = appsRes?.data || [];
-  const studentAppIds = studentApps.map(a => a.id);
-
-  // Filter logs for this student's applications
-  const studentLogs = mockProgressLogs.filter(log => studentAppIds.includes(log.applicationId));
+  const studentLogs: any[] = [];
 
   const handleUploadClick = () => {
     toast.error('Document Upload Gated: Upload action is disabled pending backend decision regarding secure file storage policies.');

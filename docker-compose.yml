@@ -9,6 +9,3 @@ services:
       MONGO_INITDB_DATABASE: kaushal
     volumes:
       - kaushal-mongodb-data:/data/db
-
-volumes:
-  kaushal-mongodb-data:

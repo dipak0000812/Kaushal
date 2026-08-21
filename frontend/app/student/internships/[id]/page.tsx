@@ -59,7 +59,8 @@ export default function InternshipDetailPage({ params }: Props) {
     );
   }
 
-  const internship = internshipRes?.data;
+  const resData: any = internshipRes?.data;
+  const internship: any = resData?.internship || resData;
   const applications = applicationsRes?.data || [];
 
   if (!internship) {
@@ -77,9 +78,9 @@ export default function InternshipDetailPage({ params }: Props) {
     );
   }
 
-  const eligibility = internship.eligibilitySnapshot;
+  const eligibility = resData?.eligibility || internship.eligibilitySnapshot;
   const isEligible = eligibility?.eligible;
-  const hasApplied = applications.some(a => a.internshipId === id);
+  const hasApplied = applications.some((a: any) => (a.internshipId?._id || a.internshipId?.id || a.internshipId) === id);
 
   const handleApply = () => {
     if (hasApplied || !isEligible) return;

@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { KeyRound, Mail, Shield, Sparkles } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
+import { apiClient } from '@/lib/api/client';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Please enter a valid email address' }),
@@ -14,13 +15,12 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const HARDCODED_CREDENTIALS = [
+const SEED_CREDENTIALS = [
   {
     role: 'student',
-    email: 'student.a@demo.com',
+    email: 'aarav.mehta@student.demo',
     password: 'Password123!',
-    name: 'Arjun Mehta',
-    userId: 'student-1',
+    name: 'Aarav Mehta',
     redirect: '/student',
     label: 'Student',
   },
@@ -28,39 +28,43 @@ const HARDCODED_CREDENTIALS = [
     role: 'tnp',
     email: 'tnp@trackintern.demo',
     password: 'Password123!',
-    name: 'T&P Coordinator',
-    userId: 'user-tnp-1',
+    name: 'Prof. S. K. Kulkarni (T&P)',
     redirect: '/tp',
     label: 'T&P Admin',
   },
   {
     role: 'company',
-    email: 'hr@northbridge.demo',
+    email: 'contact@northbridge.demo',
     password: 'Password123!',
-    name: 'Northbridge Systems HR',
-    userId: 'company-1',
+    name: 'Northbridge Systems',
     redirect: '/company',
     label: 'Company HR',
   },
   {
     role: 'faculty',
-    email: 'faculty.cse@demo.com',
+    email: 'faculty.cse@kaushal.demo',
     password: 'Password123!',
-    name: 'Dr. Vivek Kumar',
-    userId: 'user-faculty-1',
+    name: 'Dr. Ramesh Sharma',
     redirect: '/faculty',
-    label: 'Faculty CSE',
+    label: 'Faculty Mentor',
   },
   {
     role: 'hod',
-    email: 'hod.cse@demo.com',
+    email: 'hod.cse@kaushal.demo',
     password: 'Password123!',
-    name: 'Dr. Neha Shah',
-    userId: 'user-hod-1',
+    name: 'Dr. Amit Deshmukh',
     redirect: '/hod',
     label: 'HOD CSE',
   },
 ];
+
+const ROLE_REDIRECT_MAP: Record<string, string> = {
+  student: '/student',
+  tnp: '/tp',
+  company: '/company',
+  faculty: '/faculty',
+  hod: '/hod',
+};
 
 export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -78,50 +82,43 @@ export default function LoginPage() {
     },
   });
 
-  const onSubmit = (data: LoginFormValues) => {
+  const onSubmit = async (data: LoginFormValues) => {
     setIsSubmitting(true);
-    
-    // Simulate brief network delay
-    setTimeout(() => {
-      const match = HARDCODED_CREDENTIALS.find(
-        (cred) =>
-          cred.email.toLowerCase() === data.email.toLowerCase() &&
-          cred.password === data.password
-      );
+    try {
+      const response = await apiClient.auth.login({
+        email: data.email.trim(),
+        password: data.password,
+      });
 
-      if (match) {
-        // Generate mock JWT structure: header.payload.signature
-        const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-        const payload = btoa(
-          JSON.stringify({
-            role: match.role,
-            userId: match.userId,
-            email: match.email,
-            name: match.name,
-          })
-        );
-        const mockJwt = `${header}.${payload}.dummysignature`;
+      if (response.success && response.data?.token) {
+        const { token, user } = response.data;
+        const role = user?.role || (response.data as any).role;
+        const name = user?.name || (response.data as any).name || 'User';
 
-        // Set cookies matching middleware expectation
-        document.cookie = `kaushal_token=${mockJwt}; path=/; max-age=86400; SameSite=Lax`;
-        document.cookie = `token=${mockJwt}; path=/; max-age=86400; SameSite=Lax`;
+        // Store JWT in cookies for Next.js middleware and SSR
+        document.cookie = `kaushal_token=${token}; path=/; max-age=604800; SameSite=Lax`;
+        document.cookie = `token=${token}; path=/; max-age=604800; SameSite=Lax`;
 
-        // Populate localStorage
-        localStorage.setItem('kaushal_token', mockJwt);
+        // Store in localStorage for client-side API requests
+        localStorage.setItem('kaushal_token', token);
 
-        toast.success(`Success! Welcome, ${match.name}`);
+        toast.success(`Success! Welcome, ${name}`);
 
+        const targetUrl = ROLE_REDIRECT_MAP[role] || '/';
         setTimeout(() => {
-          window.location.href = match.redirect;
-        }, 800);
+          window.location.href = targetUrl;
+        }, 500);
       } else {
-        toast.error('Invalid credentials. Check the quick-fill options below.');
+        toast.error(response.error?.message || 'Invalid credentials. Please verify your email and password.');
         setIsSubmitting(false);
       }
-    }, 600);
+    } catch (err: any) {
+      toast.error(err.message || 'Authentication request failed. Please check network connection.');
+      setIsSubmitting(false);
+    }
   };
 
-  const handleQuickFill = (cred: typeof HARDCODED_CREDENTIALS[0]) => {
+  const handleQuickFill = (cred: typeof SEED_CREDENTIALS[0]) => {
     setValue('email', cred.email);
     setValue('password', cred.password);
     toast.success(`${cred.label} credentials pre-filled!`);
@@ -130,7 +127,7 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative overflow-hidden">
       <Toaster position="top-center" reverseOrder={false} />
-      
+
       {/* Background modern graphics */}
       <div className="absolute top-[-20%] left-[-10%] w-[500px] h-[500px] rounded-full bg-violet-900/10 blur-[120px]" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-sky-900/10 blur-[120px]" />
@@ -141,21 +138,20 @@ export default function LoginPage() {
             <Shield className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold tracking-tight text-white bg-gradient-to-r from-violet-400 to-sky-400 bg-clip-text text-transparent">
-            TrackIntern
+            Kaushal Portal
           </span>
         </div>
         <h2 className="mt-6 text-center text-2xl font-bold tracking-tight text-white">
           Sign in to your dashboard
         </h2>
         <p className="mt-2 text-center text-xs text-slate-400">
-          Enter your institutional credentials below to login.
+          Connected to live backend & MongoDB database
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
         <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 py-8 px-4 shadow-2xl rounded-2xl sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            
             {/* Email field */}
             <div>
               <label htmlFor="email" className="block text-xs font-semibold text-slate-300">
@@ -171,7 +167,7 @@ export default function LoginPage() {
                   className={`block w-full pl-10 pr-3 py-2 bg-slate-950/70 border ${
                     errors.email ? 'border-red-500 focus:ring-red-500/20 focus:border-red-500' : 'border-slate-800 focus:ring-violet-500/20 focus:border-violet-500'
                   } rounded-lg text-sm text-slate-200 placeholder-slate-500 focus:outline-none focus:ring-4 transition-all`}
-                  placeholder="name@university.edu"
+                  placeholder="name@kaushal.demo"
                   {...register('email')}
                 />
               </div>
@@ -215,7 +211,7 @@ export default function LoginPage() {
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    Sign In
+                    Sign In with Real API
                     <Sparkles className="w-3.5 h-3.5" />
                   </>
                 )}
@@ -226,10 +222,10 @@ export default function LoginPage() {
           {/* Quick Click credentials helper */}
           <div className="mt-8 border-t border-slate-800 pt-6">
             <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 mb-3 text-center">
-              Quick-Fill Demo Credentials
+              Quick-Fill Seed Database Credentials
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-              {HARDCODED_CREDENTIALS.map((cred) => (
+              {SEED_CREDENTIALS.map((cred) => (
                 <button
                   key={cred.role}
                   onClick={() => handleQuickFill(cred)}
@@ -241,7 +237,6 @@ export default function LoginPage() {
               ))}
             </div>
           </div>
-
         </div>
       </div>
     </div>

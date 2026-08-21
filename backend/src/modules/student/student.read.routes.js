@@ -1,4 +1,3 @@
-// FILE: src/modules/student/student.read.routes.js
 import { Router } from 'express';
 import { authenticate } from '../../middlewares/auth.js';
 import { roleGuard } from '../../middlewares/roleGuard.js';
@@ -8,23 +7,35 @@ import {
   getMyApplications,
   getWhatsNext,
 } from './student.read.controller.js';
-import { updateProfile } from './student.write.controller.js';
+import {
+  getProfile,
+  updateProfile,
+  applyToInternship,
+  acceptOfferHandler,
+  declineOfferHandler,
+  submitProgressLog,
+  getRecommendations,
+} from './student.write.controller.js';
 
 const router = Router();
 
-// PATCH /api/v1/student/profile — update student's own profile before first application
+// Student Profile
+router.get('/profile', authenticate, roleGuard(['student']), getProfile);
 router.patch('/profile', authenticate, roleGuard(['student']), updateProfile);
 
-// GET /api/v1/student/internships — browse open internships with eligibility badge
+// Internships & Recommendations
 router.get('/internships', authenticate, roleGuard(['student']), getInternships);
-
-// GET /api/v1/student/internships/:id — full eligibility breakdown for one posting
 router.get('/internships/:id', authenticate, roleGuard(['student']), getInternshipById);
+router.get('/recommendations', authenticate, roleGuard(['student']), getRecommendations);
 
-// GET /api/v1/student/applications — own applications with timeline
+// Applications Lifecycle
+router.post('/applications', authenticate, roleGuard(['student']), applyToInternship);
 router.get('/applications', authenticate, roleGuard(['student']), getMyApplications);
+router.patch('/applications/:id/accept', authenticate, roleGuard(['student']), acceptOfferHandler);
+router.patch('/applications/:id/decline', authenticate, roleGuard(['student']), declineOfferHandler);
+router.post('/applications/:id/progress-logs', authenticate, roleGuard(['student']), submitProgressLog);
 
-// GET /api/v1/student/whats-next — action prompt for home screen
+// Action prompt
 router.get('/whats-next', authenticate, roleGuard(['student']), getWhatsNext);
 
 export default router;

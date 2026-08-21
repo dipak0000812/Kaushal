@@ -174,13 +174,15 @@ export interface User {
 
 // Student Profile
 export interface StudentProfile {
-  id: string;
-  userId: string;
-  name: string;
+  id?: string;
+  _id?: string;
+  userId?: string | any;
+  name?: string;
   department: string;
   year: number;
   cgpa: number;
-  backlogs: number;
+  backlogs?: number;
+  activeBacklogs?: number;
   skills: string[];
   certifications: string[];
   resumeUrl?: string;

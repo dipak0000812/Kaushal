@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, mockTnpUsers } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/client';
 import { Role, ApplicationStatus } from '@/lib/types';
 import RoleShell from '@/components/shared/RoleShell';
 import EligibilityBreakdown from '@/components/shared/EligibilityBreakdown';
@@ -42,8 +42,14 @@ export default function VerificationQueuePage() {
     queryFn: () => apiClient.tnp.getPendingInternships(),
   });
 
+  const { data: usersRes } = useQuery({
+    queryKey: ['tnp-users'],
+    queryFn: () => apiClient.tnp.getUsers(),
+  });
+
   const applications = appsRes?.data || [];
   const pendingPostings = pendingPostingsRes?.data || [];
+  const users = usersRes?.data || [];
 
   // Filter lists for different tabs
   const acceptedApps = applications.filter(a => a.currentStatus === ApplicationStatus.ACCEPTED);
@@ -144,8 +150,8 @@ export default function VerificationQueuePage() {
     });
   };
 
-  // Find CSE/IT faculty members from mock users for select dropdown
-  const facultyUsers = mockTnpUsers.filter(u => u.role === 'faculty');
+  // Find faculty members from fetched users for select dropdown
+  const facultyUsers = users.filter((u: any) => u.role === 'faculty');
 
   return (
     <RoleShell role={Role.TNP}>

@@ -34,9 +34,9 @@ export default function TnpAnalyticsPage() {
   });
 
   // 4. Fetch Dismissals
-  const { data: dismissalsRes, refetch: refetchDismissals } = useQuery({
+  const { data: dismissalsRes, refetch: refetchDismissals } = useQuery<{ success: boolean; data: any[] }>({
     queryKey: ['dismissals'],
-    queryFn: () => Promise.resolve({ data: (apiClient as any).mockDismissals || [] }),
+    queryFn: () => Promise.resolve({ success: true, data: [] }),
   });
 
   const dismissMutation = useMutation({

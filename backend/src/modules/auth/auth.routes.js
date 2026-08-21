@@ -9,8 +9,9 @@ import {
 
 const router = Router();
 
-// POST /api/v1/auth/register — student self-registration
+// POST /api/v1/auth/register & /api/v1/auth/register/student — student self-registration
 router.post('/register', register);
+router.post('/register/student', register);
 
 // POST /api/v1/auth/register/company — company registration via invite token
 router.post('/register/company', registerCompanyHandler);

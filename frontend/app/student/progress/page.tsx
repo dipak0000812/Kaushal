@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient, mockProgressLogs } from '@/lib/api/client';
+import { apiClient } from '@/lib/api/client';
 import { Role, ApplicationStatus } from '@/lib/types';
 import RoleShell from '@/components/shared/RoleShell';
 import { useForm } from 'react-hook-form';
