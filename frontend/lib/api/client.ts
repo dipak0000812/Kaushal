@@ -11,9 +11,24 @@ import {
   InternshipCriteria,
 } from '../types';
 
-// Central API Base URL Configuration
-// Default to canonical Render backend or environment variable
-const API_BASE = (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://kaushal-750e.onrender.com/api/v1').replace(/\/$/, '');
+// ─── API Base URL Normalization ──────────────────────────────────────────────
+// Ensures that whether NEXT_PUBLIC_API_BASE_URL is configured as:
+//   "https://kaushal-750e.onrender.com"
+//   "https://kaushal-750e.onrender.com/api/v1"
+//   "http://localhost:5000"
+// It ALWAYS resolves to the canonical API prefix without missing /api/v1 or double-slashes.
+function normalizeBaseUrl(raw?: string): string {
+  if (!raw || !raw.trim()) {
+    return 'https://kaushal-750e.onrender.com/api/v1';
+  }
+  let base = raw.trim().replace(/\/+$/, '');
+  if (!base.endsWith('/api/v1') && !base.endsWith('/api')) {
+    base = `${base}/api/v1`;
+  }
+  return base;
+}
+
+const API_BASE = normalizeBaseUrl(process.env.NEXT_PUBLIC_API_BASE_URL);
 
 // Helper to retrieve auth token from browser storage or cookie
 export function getToken(): string | null {

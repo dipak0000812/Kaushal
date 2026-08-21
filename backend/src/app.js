@@ -52,7 +52,8 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, status: 'ok' });
 });
 
-// ── API routes (canonical /api/v1 prefix + /api aliases) ──────────────────
+// ── API routes (canonical /api/v1 prefix + /api & /auth aliases) ───────────
+app.use('/auth', authRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/risk', riskRoutes);
 app.use('/api/analytics', analyticsRoutes);
