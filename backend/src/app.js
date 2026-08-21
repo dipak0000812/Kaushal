@@ -9,6 +9,7 @@ import { API_PREFIX } from './core/constants.js';
 import { notFound } from './middlewares/not-found.js';
 import { errorHandler } from './middlewares/error-handler.js';
 
+import authRoutes from './modules/auth/auth.routes.js';
 import riskRoutes from './modules/risk/risk.routes.js';
 import analyticsRoutes from './modules/analytics/analytics.routes.js';
 import studentReadRoutes from './modules/student/student.read.routes.js';
@@ -16,6 +17,7 @@ import studentOffCampusRoutes from './modules/student/student.offcampus.routes.j
 import companyReadRoutes from './modules/company/company.read.routes.js';
 import facultyReadRoutes from './modules/faculty/faculty.read.routes.js';
 import tnpReadRoutes from './modules/tnp/tnp.read.routes.js';
+import tnpAdminRoutes from './modules/tnp/tnp.admin.routes.js';
 import tnpOffCampusRoutes from './modules/tnp/tnp.offcampus.routes.js';
 import hodRoutes from './modules/hod/hod.routes.js';
 
@@ -51,6 +53,7 @@ app.get('/health', (_req, res) => {
 });
 
 // ── API routes (canonical /api/v1 prefix + /api aliases) ──────────────────
+app.use('/api/auth', authRoutes);
 app.use('/api/risk', riskRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/student/off-campus-opportunities', studentOffCampusRoutes);
@@ -59,9 +62,11 @@ app.use('/api/company', companyReadRoutes);
 app.use('/api/faculty', facultyReadRoutes);
 app.use('/api/tnp/off-campus', tnpOffCampusRoutes);
 app.use('/api/tnp/off-campus-opportunities', tnpOffCampusRoutes);
+app.use('/api/tnp', tnpAdminRoutes);
 app.use('/api/tnp', tnpReadRoutes);
 app.use('/api/hod', hodRoutes);
 
+app.use(`${API_PREFIX}/auth`, authRoutes);
 app.use(`${API_PREFIX}/risk`, riskRoutes);
 app.use(`${API_PREFIX}/analytics`, analyticsRoutes);
 app.use(`${API_PREFIX}/student/off-campus-opportunities`, studentOffCampusRoutes);
@@ -70,6 +75,7 @@ app.use(`${API_PREFIX}/company`, companyReadRoutes);
 app.use(`${API_PREFIX}/faculty`, facultyReadRoutes);
 app.use(`${API_PREFIX}/tnp/off-campus`, tnpOffCampusRoutes);
 app.use(`${API_PREFIX}/tnp/off-campus-opportunities`, tnpOffCampusRoutes);
+app.use(`${API_PREFIX}/tnp`, tnpAdminRoutes);
 app.use(`${API_PREFIX}/tnp`, tnpReadRoutes);
 app.use(`${API_PREFIX}/hod`, hodRoutes);
 

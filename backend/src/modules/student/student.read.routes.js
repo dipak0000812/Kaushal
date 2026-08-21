@@ -8,8 +8,12 @@ import {
   getMyApplications,
   getWhatsNext,
 } from './student.read.controller.js';
+import { updateProfile } from './student.write.controller.js';
 
 const router = Router();
+
+// PATCH /api/v1/student/profile — update student's own profile before first application
+router.patch('/profile', authenticate, roleGuard(['student']), updateProfile);
 
 // GET /api/v1/student/internships — browse open internships with eligibility badge
 router.get('/internships', authenticate, roleGuard(['student']), getInternships);
