@@ -962,10 +962,20 @@ function mockGetHodDashboard() {
     activeCount: mockApplications.filter(a => a.currentStatus === ApplicationStatus.IN_PROGRESS).length,
     completedCount: mockApplications.filter(a => a.currentStatus === ApplicationStatus.COMPLETED).length,
     ppoCount: mockApplications.filter(a => a.ppoOffered).length,
-    skillGapReport: [
-      { skill: 'React', demand: 10, supply: 6 },
-      { skill: 'Node.js', demand: 8, supply: 4 },
-    ]
+    skillGapReport: mockGetAnalytics().skillGapReport,
+    students: mockApplications.map(a => {
+      const activeDismissal = getActiveDismissal(a.id);
+      const risk = activeDismissal ? null : computeLiveRisk(a.id);
+      return {
+        studentId: a.studentId,
+        applicationId: a.id,
+        studentName: a.studentName,
+        internshipTitle: a.internshipTitle,
+        currentStatus: a.currentStatus,
+        risk,
+        dismissal: activeDismissal,
+      };
+    })
   };
 }
 
@@ -978,11 +988,15 @@ function mockGetHodStudentById(studentId: string): ApiResponse<any> {
       error: { code: 'NOT_FOUND', message: `Student with ID ${studentId} not found` },
     };
   }
+  const activeDismissal = getActiveDismissal(app.id);
+  const risk = activeDismissal ? null : computeLiveRisk(app.id);
   return mockResponse({
     studentId,
     studentName: app.studentName,
     internshipTitle: app.internshipTitle,
     currentStatus: app.currentStatus,
+    risk,
+    dismissal: activeDismissal,
     logs: mockProgressLogs.filter(l => l.applicationId === app.id),
   });
 }
