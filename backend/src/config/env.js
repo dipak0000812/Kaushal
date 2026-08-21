@@ -4,7 +4,7 @@ import { z } from 'zod';
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().int().min(1).max(65535).default(5000),
-  MONGODB_URI: z.string().min(1),
+  MONGODB_URI: z.string().min(1).default(() => process.env.MONGO_URI || 'mongodb://localhost:27017/kaushal'),
   JWT_SECRET: z.string().min(32),
   JWT_EXPIRES_IN: z.string().default('7d'),
   CORS_ORIGIN: z.string().default('*'),

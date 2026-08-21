@@ -38,6 +38,19 @@ export const INTERNSHIP_STATUS = Object.freeze({
   CANCELLED: 'cancelled',
 });
 
+// ── Internship opportunity source ──────────────────────────────────────────
+export const INTERNSHIP_SOURCE = Object.freeze({
+  CAMPUS: 'campus',
+  OFF_CAMPUS: 'off_campus',
+});
+
+// ── Off-campus verification status ─────────────────────────────────────────
+export const OFF_CAMPUS_VERIFICATION_STATUS = Object.freeze({
+  PENDING: 'pendingVerification',
+  VERIFIED: 'verified',
+  REJECTED: 'rejected',
+});
+
 // ── Application lifecycle statuses ─────────────────────────────────────────
 export const APPLICATION_STATUS = Object.freeze({
   APPLIED: 'applied',

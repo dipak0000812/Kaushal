@@ -6,6 +6,8 @@ import {
   APPLICATION_STATUS,
   ACTIVE_STATUSES,
   MENTOR_ASSIGNMENT_STATUS,
+  INTERNSHIP_SOURCE,
+  OFF_CAMPUS_VERIFICATION_STATUS,
 } from '../../utils/constants.js';
 import { getLiveRiskForApplications } from '../risk/services/risk.service.js';
 
@@ -394,6 +396,54 @@ async function _getAtRiskCount() {
 }
 
 /**
+ * Returns off-campus internship tracking and verification statistics.
+ *
+ * @returns {Promise<{
+ *   total: number,
+ *   pendingVerification: number,
+ *   verified: number,
+ *   rejected: number,
+ *   campusCount: number,
+ *   offCampusCount: number,
+ * }>}
+ */
+export async function getOffCampusStats() {
+  const [campusCount, offCampusResults] = await Promise.all([
+    Internship.countDocuments({ source: INTERNSHIP_SOURCE.CAMPUS }),
+    Internship.aggregate([
+      { $match: { source: INTERNSHIP_SOURCE.OFF_CAMPUS } },
+      {
+        $group: {
+          _id: '$offCampusVerification.status',
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+  ]);
+
+  let pendingVerification = 0;
+  let verified = 0;
+  let rejected = 0;
+  let offCampusCount = 0;
+
+  for (const { _id, count } of offCampusResults) {
+    offCampusCount += count;
+    if (_id === OFF_CAMPUS_VERIFICATION_STATUS.PENDING) pendingVerification = count;
+    else if (_id === OFF_CAMPUS_VERIFICATION_STATUS.VERIFIED) verified = count;
+    else if (_id === OFF_CAMPUS_VERIFICATION_STATUS.REJECTED) rejected = count;
+  }
+
+  return {
+    total: campusCount + offCampusCount,
+    pendingVerification,
+    verified,
+    rejected,
+    campusCount,
+    offCampusCount,
+  };
+}
+
+/**
  * Returns the full dashboard payload for GET /tnp/analytics/dashboard.
  *
  * Computes and returns all dashboard analytics in one call:
@@ -402,24 +452,33 @@ async function _getAtRiskCount() {
  * - departmentStats
  * - ppoOutcomes
  * - companyStats (open posting counts by company)
+ * - offCampusStats (institutional tracking of external opportunities)
  *
  * @returns {Promise<{
  *   applicationFunnel: object,
  *   skillGapReport: Array,
  *   departmentStats: Array,
  *   ppoOutcomes: object,
- *   companyStats: Array
+ *   companyStats: Array,
+ *   offCampusStats: object
  * }>}
  */
 export async function getTnpDashboard() {
-  const [applicationFunnel, skillGapReport, departmentStats, ppoOutcomes, companyStats] =
-    await Promise.all([
-      getApplicationFunnel(),
-      getSkillGapReport(),
-      getDepartmentAnalytics(),
-      getPpoOutcomes(),
-      getCompanyStats(),
-    ]);
+  const [
+    applicationFunnel,
+    skillGapReport,
+    departmentStats,
+    ppoOutcomes,
+    companyStats,
+    offCampusStats,
+  ] = await Promise.all([
+    getApplicationFunnel(),
+    getSkillGapReport(),
+    getDepartmentAnalytics(),
+    getPpoOutcomes(),
+    getCompanyStats(),
+    getOffCampusStats(),
+  ]);
 
   return {
     applicationFunnel,
@@ -427,6 +486,7 @@ export async function getTnpDashboard() {
     departmentStats,
     ppoOutcomes,
     companyStats,
+    offCampusStats,
   };
 }
 

@@ -6,6 +6,8 @@ import {
   USER_STATUS,
   INTERNSHIP_STATUS,
   INTERNSHIP_MODE,
+  INTERNSHIP_SOURCE,
+  OFF_CAMPUS_VERIFICATION_STATUS,
   APPLICATION_STATUS,
   MENTOR_ASSIGNMENT_STATUS,
   EVIDENCE_TYPE,
@@ -776,6 +778,160 @@ export async function seed(options = {}) {
 
   notableDemos.tnpOverride = {
     applicationId: appOverride._id.toString(),
+  };
+
+  // ── 6k. Off-Campus Internship Scenarios ───────────────────────────────────
+  console.log('🌐 Creating Off-Campus Internship Demo Scenarios...');
+
+  // Scenario 1: S8 (Pooja Gupta) submitted off-campus internship (Pending Verification Queue)
+  const offCampusPending = await Internship.create({
+    source: INTERNSHIP_SOURCE.OFF_CAMPUS,
+    companyId: null,
+    externalCompanyName: 'Atlassian India',
+    title: 'Site Reliability Engineering Intern',
+    description: 'Cloud reliability, observability dashboards, and incident response automation.',
+    duration: '6 months',
+    mode: INTERNSHIP_MODE.REMOTE,
+    stipend: 65000,
+    vacancies: 1,
+    lastDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+    status: INTERNSHIP_STATUS.PENDING_APPROVAL,
+    offCampusVerification: {
+      status: OFF_CAMPUS_VERIFICATION_STATUS.PENDING,
+      submittedBy: students[7].profile._id,
+      submittedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      evidenceUrl: 'https://storage.example.com/offers/pooja-atlassian-offer.pdf',
+      verifiedBy: null,
+      verifiedAt: null,
+      rejectionReason: null,
+    },
+  });
+
+  // Scenario 2: S9 (Kavita Iyer) registered off-campus internship (Verified -> In-Progress with Mentor)
+  const offCampusVerified = await Internship.create({
+    source: INTERNSHIP_SOURCE.OFF_CAMPUS,
+    companyId: null,
+    externalCompanyName: 'Uber India Technologies',
+    title: 'Backend Platform Engineering Intern',
+    description: 'High-throughput microservices in Go and distributed database scaling.',
+    duration: '6 months',
+    mode: INTERNSHIP_MODE.HYBRID,
+    stipend: 75000,
+    vacancies: 1,
+    lastDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+    status: INTERNSHIP_STATUS.OPEN,
+    offCampusVerification: {
+      status: OFF_CAMPUS_VERIFICATION_STATUS.VERIFIED,
+      submittedBy: students[8].profile._id,
+      submittedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      evidenceUrl: 'https://storage.example.com/offers/kavita-uber-offer.pdf',
+      verifiedBy: tnpUser._id,
+      verifiedAt: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000),
+      rejectionReason: null,
+    },
+  });
+
+  // Downstream Application for verified off-campus internship
+  const offCampusApp = await Application.create({
+    studentId: students[8].profile._id,
+    internshipId: offCampusVerified._id,
+    currentStatus: APPLICATION_STATUS.IN_PROGRESS,
+    eligibilitySnapshot: {
+      eligible: true,
+      checks: [
+        {
+          criterion: 'DEPARTMENT',
+          required: [],
+          actual: students[8].profile.department,
+          pass: true,
+          reason: null,
+        },
+        {
+          criterion: 'OFF_CAMPUS_INSTITUTIONAL_VERIFICATION',
+          pass: true,
+          reason: 'Verified and approved by T&P cell',
+        },
+      ],
+      computedAt: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000),
+    },
+    timeline: [
+      {
+        fromStatus: null,
+        toStatus: APPLICATION_STATUS.APPLIED,
+        actorId: tnpUser._id,
+        actorRole: ROLES.TNP,
+        reason: 'Off-campus opportunity registered',
+        at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+      },
+      {
+        fromStatus: APPLICATION_STATUS.APPLIED,
+        toStatus: APPLICATION_STATUS.TNP_VERIFIED,
+        actorId: tnpUser._id,
+        actorRole: ROLES.TNP,
+        reason: 'Institutional verification granted by T&P',
+        at: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000),
+      },
+      {
+        fromStatus: APPLICATION_STATUS.TNP_VERIFIED,
+        toStatus: APPLICATION_STATUS.MENTOR_PENDING,
+        actorId: tnpUser._id,
+        actorRole: ROLES.TNP,
+        reason: 'Assigned faculty mentor Dr. Ramesh Sharma',
+        at: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000),
+      },
+      {
+        fromStatus: APPLICATION_STATUS.MENTOR_PENDING,
+        toStatus: APPLICATION_STATUS.MENTOR_ASSIGNED,
+        actorId: faculty1._id,
+        actorRole: ROLES.FACULTY,
+        reason: 'Mentor accepted assignment',
+        at: new Date(Date.now() - 24 * 24 * 60 * 60 * 1000),
+      },
+      {
+        fromStatus: APPLICATION_STATUS.MENTOR_ASSIGNED,
+        toStatus: APPLICATION_STATUS.IN_PROGRESS,
+        actorId: students[8].user._id,
+        actorRole: ROLES.STUDENT,
+        reason: 'First progress log submitted',
+        at: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+      },
+    ],
+  });
+
+  await MentorAssignment.create({
+    applicationId: offCampusApp._id,
+    facultyId: faculty1._id,
+    status: MENTOR_ASSIGNMENT_STATUS.ACCEPTED,
+  });
+
+  await ProgressLog.create([
+    {
+      applicationId: offCampusApp._id,
+      weekLabel: 'Week 1',
+      description: 'Completed onboarding, environment setup, and codebase walkthrough.',
+      evidenceType: EVIDENCE_TYPE.LINK,
+      evidenceUrl: 'https://github.com/uber/platform/pull/101',
+      verified: true,
+      verifiedBy: faculty1._id,
+      verifiedAt: new Date(Date.now() - 12 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000),
+    },
+    {
+      applicationId: offCampusApp._id,
+      weekLabel: 'Week 2',
+      description: 'Implemented service telemetry metrics and load testing benchmarks.',
+      evidenceType: EVIDENCE_TYPE.LINK,
+      evidenceUrl: 'https://github.com/uber/platform/pull/108',
+      verified: true,
+      verifiedBy: faculty1._id,
+      verifiedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
+      createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+    },
+  ]);
+
+  notableDemos.offCampus = {
+    pendingVerificationId: offCampusPending._id.toString(),
+    verifiedApplicationId: offCampusApp._id.toString(),
   };
 
   // ── 7. Console Summary ───────────────────────────────────────────────────

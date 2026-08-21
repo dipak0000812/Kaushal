@@ -9,6 +9,16 @@ import { API_PREFIX } from './core/constants.js';
 import { notFound } from './middlewares/not-found.js';
 import { errorHandler } from './middlewares/error-handler.js';
 
+import riskRoutes from './modules/risk/risk.routes.js';
+import analyticsRoutes from './modules/analytics/analytics.routes.js';
+import studentReadRoutes from './modules/student/student.read.routes.js';
+import studentOffCampusRoutes from './modules/student/student.offcampus.routes.js';
+import companyReadRoutes from './modules/company/company.read.routes.js';
+import facultyReadRoutes from './modules/faculty/faculty.read.routes.js';
+import tnpReadRoutes from './modules/tnp/tnp.read.routes.js';
+import tnpOffCampusRoutes from './modules/tnp/tnp.offcampus.routes.js';
+import hodRoutes from './modules/hod/hod.routes.js';
+
 const app = express();
 
 // ── Security ──────────────────────────────────────────────────────────────
@@ -40,13 +50,28 @@ app.get('/health', (_req, res) => {
   res.status(200).json({ success: true, status: 'ok' });
 });
 
-// ── API routes (mounted here as modules are implemented) ──────────────────
-// app.use(`${API_PREFIX}/auth`, authRoutes);
-// app.use(`${API_PREFIX}/student`, studentRoutes);
-// app.use(`${API_PREFIX}/company`, companyRoutes);
-// app.use(`${API_PREFIX}/faculty`, facultyRoutes);
-// app.use(`${API_PREFIX}/tnp`, tnpRoutes);
-// app.use(`${API_PREFIX}/hod`, hodRoutes);
+// ── API routes (canonical /api/v1 prefix + /api aliases) ──────────────────
+app.use('/api/risk', riskRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/student/off-campus-opportunities', studentOffCampusRoutes);
+app.use('/api/student', studentReadRoutes);
+app.use('/api/company', companyReadRoutes);
+app.use('/api/faculty', facultyReadRoutes);
+app.use('/api/tnp/off-campus', tnpOffCampusRoutes);
+app.use('/api/tnp/off-campus-opportunities', tnpOffCampusRoutes);
+app.use('/api/tnp', tnpReadRoutes);
+app.use('/api/hod', hodRoutes);
+
+app.use(`${API_PREFIX}/risk`, riskRoutes);
+app.use(`${API_PREFIX}/analytics`, analyticsRoutes);
+app.use(`${API_PREFIX}/student/off-campus-opportunities`, studentOffCampusRoutes);
+app.use(`${API_PREFIX}/student`, studentReadRoutes);
+app.use(`${API_PREFIX}/company`, companyReadRoutes);
+app.use(`${API_PREFIX}/faculty`, facultyReadRoutes);
+app.use(`${API_PREFIX}/tnp/off-campus`, tnpOffCampusRoutes);
+app.use(`${API_PREFIX}/tnp/off-campus-opportunities`, tnpOffCampusRoutes);
+app.use(`${API_PREFIX}/tnp`, tnpReadRoutes);
+app.use(`${API_PREFIX}/hod`, hodRoutes);
 
 // ── 404 and error handling — must be last ─────────────────────────────────
 app.use(notFound);
