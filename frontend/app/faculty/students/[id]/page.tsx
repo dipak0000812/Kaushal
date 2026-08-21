@@ -23,19 +23,30 @@ export default function StudentDetailPage({ params }: Props) {
   const [dismissNote, setDismissNote] = useState('');
 
   // 1. Fetch assigned students list to locate details for the current student
-  const { data: studentsRes, isLoading } = useQuery({
+  const { data: studentsRes, isLoading: isStudentsLoading } = useQuery({
     queryKey: ['faculty-students'],
     queryFn: () => apiClient.faculty.getStudents(),
   });
 
   const studentList = studentsRes?.data || [];
-  const student = studentList.find(s => s.applicationId === id);
+  const student = studentList.find((s: any) => (s.applicationId === id || s.id === id));
 
-  // 2. Log Verification Mutation
+  // 2. Fetch weekly progress logs for this application
+  const { data: logsRes, isLoading: isLogsLoading } = useQuery({
+    queryKey: ['faculty-student-progress', id],
+    queryFn: () => apiClient.faculty.getStudentProgress(id),
+    enabled: !!id,
+  });
+
+  const logs = logsRes?.data || [];
+  const isLoading = isStudentsLoading || isLogsLoading;
+
+  // 3. Log Verification Mutation
   const verifyMutation = useMutation({
     mutationFn: (logId: string) => apiClient.faculty.verifyProgressLog(logId),
     onSuccess: (res) => {
       if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['faculty-student-progress', id] });
         queryClient.invalidateQueries({ queryKey: ['faculty-students'] });
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
         toast.success('Weekly progress log verified successfully.');
@@ -45,11 +56,12 @@ export default function StudentDetailPage({ params }: Props) {
     }
   });
 
-  // 3. Risk Flag Dismissal Mutation
+  // 4. Risk Flag Dismissal Mutation
   const dismissMutation = useMutation({
     mutationFn: (note: string) => apiClient.faculty.dismissRiskFlag(id, { note }),
     onSuccess: (res) => {
       if (res.success) {
+        queryClient.invalidateQueries({ queryKey: ['faculty-student-progress', id] });
         queryClient.invalidateQueries({ queryKey: ['faculty-students'] });
         queryClient.invalidateQueries({ queryKey: ['tnp-alerts'] });
         queryClient.invalidateQueries({ queryKey: ['student-applications'] });
@@ -189,15 +201,15 @@ export default function StudentDetailPage({ params }: Props) {
         <section className="space-y-4">
           <h3 className="text-xs font-bold text-[#475569] uppercase tracking-wider">Weekly Log Auditing</h3>
           
-          {student.logs.length === 0 ? (
+          {logs.length === 0 ? (
             <div className="bg-white border border-[#E2E8F0] p-10 text-center rounded-lg text-xs text-[#64748B]">
               No weekly progress logs have been submitted by this candidate yet.
             </div>
           ) : (
             <div className="space-y-4">
-              {student.logs.map((log: any) => (
+              {logs.map((log: any) => (
                 <EvidenceCard 
-                  key={log.id} 
+                  key={log._id || log.id} 
                   log={log} 
                   showActions={true} 
                   onVerify={handleVerify} 

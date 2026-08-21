@@ -187,20 +187,24 @@ export default function FacultyDashboard() {
                       </thead>
                       <tbody className="divide-y divide-[#F1F5F9] text-xs text-[#334155]">
                         {students.map((student: any) => {
-                          const hasRisk = student.risk && student.risk !== 'none';
+                          const riskLevel = student.riskLevel || student.risk || 'low';
+                          const hasRisk = !student.riskSuppressed && (riskLevel === 'high' || riskLevel === 'medium');
+                          const logCount = student.logs?.length ?? 0;
                           return (
                             <tr key={student.applicationId} className="hover:bg-[#F8FAFC] transition-colors">
                               <td className="p-4 font-semibold">{student.studentName}</td>
                               <td className="p-4">{student.internshipTitle}</td>
                               <td className="p-4 font-mono text-[#475569]">
-                                {student.logs.length} log(s)
+                                <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[11px] font-medium">
+                                  {logCount > 0 ? `${logCount} log(s)` : student.currentStatus || 'Active'}
+                                </span>
                               </td>
                               <td className="p-4">
                                 {hasRisk ? (
-                                  <RiskBadge riskLevel={student.risk} />
+                                  <RiskBadge riskLevel={riskLevel} />
                                 ) : (
                                   <span className="text-[10px] font-semibold text-[#94A3B8] italic">
-                                    {student.dismissal ? 'Dismissed' : 'None'}
+                                    {student.riskSuppressed || student.dismissal ? 'Dismissed' : 'Low / Clear'}
                                   </span>
                                 )}
                               </td>
